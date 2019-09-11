@@ -8,5 +8,5 @@ include_directories(${PDAL_INCLUDE_DIRS})
 link_directories(${PDAL_LIBRARY_DIRS})
 add_definitions(${PDAL_DEFINITIONS})
 
-add_executable(pathfinder main.cpp)
+add_executable(pathfinder main.cpp MyReader.cpp MyReader.h)
 target_link_libraries(pathfinder PRIVATE ${PDAL_LIBRARIES})
