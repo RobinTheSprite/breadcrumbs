@@ -1,28 +1,30 @@
 #include <iostream>
+#include <vector>
+#include <chrono>
 #include <pdal/io/LasReader.hpp>
 #include <pdal/io/LasWriter.hpp>
 #include <pdal/filters/ReprojectionFilter.hpp>
 #include <pdal/filters/AssignFilter.hpp>
-#include <pdal/filters/ELMFilter.hpp>
-#include <pdal/filters/OutlierFilter.hpp>
 #include <pdal/filters/SMRFilter.hpp>
 #include <pdal/filters/RangeFilter.hpp>
+#include <pdal/filters/MergeFilter.hpp>
 #include <pdal/filters/StreamCallbackFilter.hpp>
 
 using std::cout;
 using std::endl;
+using std::vector;
 
 using namespace pdal;
 
-int main()
+vector<PointRef> getAndFilterCloud(const string &filename)
 {
     LasReader reader;
 
     Options options;
-    options.add("filename", "../FB17_3764.laz");
+    options.add("filename", filename);
     reader.setOptions(options);
 
-    FixedPointTable table(100);
+    PointTable table;
     reader.prepare(table);
 
     std::cout << "Reading LAZ file..." << std::endl;
@@ -50,12 +52,6 @@ int main()
     assign.addOptions(assignOptions);
     assign.setInput(repro);
 
-    ELMFilter elm;
-    elm.setInput(assign);
-
-    OutlierFilter outlier;
-    outlier.setInput(elm);
-
     Options smrfOptions;
     smrfOptions.add("ignore", "Classification[7:7]");
     smrfOptions.add("slope", 0.2);
@@ -63,7 +59,7 @@ int main()
     smrfOptions.add("threshold", 0.45);
     smrfOptions.add("scalar", 1.2);
     SMRFilter smrf;
-    smrf.setInput(elm);
+    smrf.setInput(assign);
     smrf.addOptions(smrfOptions);
 
     Options rangeOptions;
@@ -72,31 +68,83 @@ int main()
     range.setInput(smrf);
     range.addOptions(rangeOptions);
 
-    StreamCallbackFilter stream;
-    stream.setInput(assign);
+    range.prepare(table);
+    PointViewSet set = range.execute(table);
 
-    double pointCount = 0;
-    int percentage = 0;
-    int savedPercentage = 0;
-    auto processOne = [&](PointRef & point)
+    PointViewPtr view = *(set.begin());
+    vector<PointRef> cloud;
+    cloud.reserve(view->size());
+
+    for (PointId i = 0; i < view->size(); ++i)
     {
-       ++pointCount;
-       percentage = (int)(pointCount/header.pointCount() * 100);
+        cloud.push_back(view->point(i));
+    }
 
-       if (percentage != savedPercentage)
-       {
-           savedPercentage = percentage;
-           cout << percentage << "%" << endl;
-       }
+    return cloud;
+}
+
+vector<PointRef> getCloud(const string &filename)
+{
+    LasReader reader;
+
+    Options options;
+    options.add("filename", filename);
+    reader.setOptions(options);
+
+    FixedPointTable table(100);
+    reader.prepare(table);
+
+    std::cout << "Reading LAZ file..." << std::endl;
+
+    string utmProj4 = "+proj=utm +zone=6 +ellps=WGS84 +datum=WGS84 +units=m +no_defs";
+    SpatialReference newCoordSystem(utmProj4);
+
+    LasHeader header = reader.header();
+
+    cout << "File has " << reader.preview().m_pointCount << " points" << endl;
+
+    cout << "Setting Options" << endl;
+    Options filterOptions;
+    filterOptions.add("in_srs", header.srs());
+    filterOptions.add("out_srs", newCoordSystem.getProj4());
+
+    ReprojectionFilter repro;
+    repro.addOptions(filterOptions);
+    repro.setInput(reader);
+    repro.prepare(table);
+
+    vector<PointRef> cloud;
+    cloud.reserve(repro.preview().m_pointCount);
+    auto processOne = [&] (PointRef & point)
+    {
+        cloud.push_back(point);
 
         return true;
     };
 
-    cout << "Executing" << endl;
+    StreamCallbackFilter callback;
+    callback.setCallback(processOne);
+    callback.prepare(table);
+    callback.execute(table);
 
-    stream.setCallback(processOne);
-    stream.prepare(table);
-    stream.execute(table);
+    return cloud;
+}
+
+int main()
+{
+    //TODO: Try and do a file merge myself
+
+    auto start = std::chrono::system_clock::now();
+
+    auto end = std::chrono::system_clock::now();
+
+    vector<PointRef> cloud = getAndFilterCloud("../FB17_3764.laz");
+
+    cout << "Cloud Size: " << cloud.size() << endl;
+
+    std::chrono::duration<double> difference = end - start;
+
+    cout << difference.count() << endl;
 
     return 0;
 }
