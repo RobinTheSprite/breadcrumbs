@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
-#include <chrono>
+#include <algorithm>
+#include <numeric>
 #include <pdal/io/LasReader.hpp>
 #include <pdal/io/LasWriter.hpp>
 #include <pdal/filters/ReprojectionFilter.hpp>
@@ -16,8 +17,19 @@ using std::vector;
 
 using namespace pdal;
 
-vector<PointRef> getAndFilterCloud(const string &filename)
+struct Point
 {
+    double x = 0;
+    double y = 0;
+    double z = 0;
+};
+
+using PointCloud = vector<Point>;
+
+PointCloud getAndFilterCloud(const string &filename)
+{
+    cout << "Reading " << filename << "..." << endl;
+
     LasReader reader;
 
     Options options;
@@ -27,8 +39,6 @@ vector<PointRef> getAndFilterCloud(const string &filename)
     PointTable table;
     reader.prepare(table);
 
-    std::cout << "Reading LAZ file..." << std::endl;
-
     string utmProj4 = "+proj=utm +zone=6 +ellps=WGS84 +datum=WGS84 +units=m +no_defs";
     SpatialReference newCoordSystem(utmProj4);
 
@@ -36,7 +46,6 @@ vector<PointRef> getAndFilterCloud(const string &filename)
 
     cout << "File has " << reader.preview().m_pointCount << " points" << endl;
 
-    cout << "Setting Options" << endl;
     Options filterOptions;
     filterOptions.add("in_srs", header.srs());
     filterOptions.add("out_srs", newCoordSystem.getProj4());
@@ -72,19 +81,27 @@ vector<PointRef> getAndFilterCloud(const string &filename)
     PointViewSet set = range.execute(table);
 
     PointViewPtr view = *(set.begin());
-    vector<PointRef> cloud;
+    PointCloud cloud;
     cloud.reserve(view->size());
 
     for (PointId i = 0; i < view->size(); ++i)
     {
-        cloud.push_back(view->point(i));
+        Point p;
+        PointRef pdalPoint = view->point(i);
+        p.x = pdalPoint.getFieldAs<double>(Dimension::Id::X);
+        p.y = pdalPoint.getFieldAs<double>(Dimension::Id::Y);
+        p.z = pdalPoint.getFieldAs<double>(Dimension::Id::Z);
+
+        cloud.push_back(p);
     }
 
     return cloud;
 }
 
-vector<PointRef> getCloud(const string &filename)
+PointCloud getCloud(const string &filename)
 {
+    cout << "Reading " << filename << "..." << endl;
+
     LasReader reader;
 
     Options options;
@@ -94,8 +111,6 @@ vector<PointRef> getCloud(const string &filename)
     FixedPointTable table(100);
     reader.prepare(table);
 
-    std::cout << "Reading LAZ file..." << std::endl;
-
     string utmProj4 = "+proj=utm +zone=6 +ellps=WGS84 +datum=WGS84 +units=m +no_defs";
     SpatialReference newCoordSystem(utmProj4);
 
@@ -103,7 +118,6 @@ vector<PointRef> getCloud(const string &filename)
 
     cout << "File has " << reader.preview().m_pointCount << " points" << endl;
 
-    cout << "Setting Options" << endl;
     Options filterOptions;
     filterOptions.add("in_srs", header.srs());
     filterOptions.add("out_srs", newCoordSystem.getProj4());
@@ -113,38 +127,129 @@ vector<PointRef> getCloud(const string &filename)
     repro.setInput(reader);
     repro.prepare(table);
 
-    vector<PointRef> cloud;
-    cloud.reserve(repro.preview().m_pointCount);
-    auto processOne = [&] (PointRef & point)
+    PointCloud cloud;
+    cloud.reserve(header.pointCount());
+    auto counter = 0.0;
+    int lastPercentage = 0;
+    auto processOne = [&] (PointRef & pdalPoint)
     {
-        cloud.push_back(point);
+        Point p;
+        p.x = pdalPoint.getFieldAs<double>(Dimension::Id::X);
+        p.y = pdalPoint.getFieldAs<double>(Dimension::Id::Y);
+        p.z = pdalPoint.getFieldAs<double>(Dimension::Id::Z);
+
+        auto currentPercentage = static_cast<int>(counter / header.pointCount() * 100);
+        if (lastPercentage < currentPercentage)
+        {
+            lastPercentage = currentPercentage;
+            cout << currentPercentage << endl;
+        }
+        counter++;
+
+        cloud.push_back(p);
 
         return true;
     };
 
     StreamCallbackFilter callback;
     callback.setCallback(processOne);
+    callback.setInput(repro);
     callback.prepare(table);
     callback.execute(table);
 
     return cloud;
 }
 
+void writeToFile(const PointCloud &cloud, const string &filename)
+{
+    cout << "Writing to " << filename << "..." << endl;
+
+    if (cloud.empty())
+    {
+        cout << "Error: Point Cloud Empty" << endl;
+        return;
+    }
+
+    FixedPointTable table(100);
+    table.layout()->registerDim(Dimension::Id::X);
+    table.layout()->registerDim(Dimension::Id::Y);
+    table.layout()->registerDim(Dimension::Id::Z);
+
+    PointView view(table);
+
+    auto index = 0u;
+    auto lastPercentage = 0.0;
+    auto processOne = [&](PointRef & point)
+    {
+        auto currentPercentage = static_cast<int>(index / cloud.size() * 100);
+        if (lastPercentage < currentPercentage)
+        {
+            lastPercentage = currentPercentage;
+            cout << currentPercentage << endl;
+        }
+        index++;
+
+        if (index < cloud.size())
+        {
+            auto x = cloud[index].x;
+            auto y = cloud[index].y;
+            auto z = cloud[index].z;
+
+            point.setField(Dimension::Id::X, x);
+            point.setField(Dimension::Id::Y, y);
+            point.setField(Dimension::Id::Z, z);
+
+            ++index;
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    };
+
+    StreamCallbackFilter callback;
+    callback.setCallback(processOne);
+
+    Options options;
+    options.add("filename", filename);
+    options.add("a_srs", "EPSG:32606");
+    LasWriter writer;
+    writer.setInput(callback);
+    writer.addOptions(options);
+    writer.prepare(table);
+    writer.execute(table);
+}
+
+PointCloud mergeClouds(vector<PointCloud> && clouds)
+{
+    auto foldCloudSizes = [](auto a, auto b)
+    {
+        return a + b.size();
+    };
+
+    PointCloud outCloud;
+    outCloud.reserve(std::accumulate(clouds.begin(), clouds.end(), (unsigned long)0, foldCloudSizes));
+
+    for (auto cloud : clouds)
+    {
+        outCloud.insert(outCloud.end(), cloud.begin(), cloud.end());
+    }
+
+    return outCloud;
+}
+
 int main()
 {
-    //TODO: Try and do a file merge myself
 
-    auto start = std::chrono::system_clock::now();
+    PointCloud cloud1 = getCloud("FB17_3765_filtered.laz");
 
-    auto end = std::chrono::system_clock::now();
+    PointCloud cloud2 = getCloud("filter_test.laz");
 
-    vector<PointRef> cloud = getAndFilterCloud("../FB17_3764.laz");
+    PointCloud cloud_out = mergeClouds({cloud1, cloud2});
 
-    cout << "Cloud Size: " << cloud.size() << endl;
-
-    std::chrono::duration<double> difference = end - start;
-
-    cout << difference.count() << endl;
+    writeToFile(cloud_out, "merge_test.laz");
 
     return 0;
 }
