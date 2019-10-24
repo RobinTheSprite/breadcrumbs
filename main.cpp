@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <map>
 #include <pdal/io/LasReader.hpp>
 #include <pdal/io/LasWriter.hpp>
 #include <pdal/filters/ReprojectionFilter.hpp>
@@ -22,9 +23,26 @@ struct Point
     double x = 0;
     double y = 0;
     double z = 0;
+
+    std::map<Dimension::Id, uint16_t> rgb;
 };
 
 using PointCloud = vector<Point>;
+
+Point pointProcessor(const PointRef & pdalPoint)
+{
+    Point p;
+
+    p.x = pdalPoint.getFieldAs<double>(Dimension::Id::X);
+    p.y = pdalPoint.getFieldAs<double>(Dimension::Id::Y);
+    p.z = pdalPoint.getFieldAs<double>(Dimension::Id::Z);
+
+    p.rgb.insert({Dimension::Id::Red, 255});
+    p.rgb.insert({Dimension::Id::Green, 255});
+    p.rgb.insert({Dimension::Id::Blue, 255});
+
+    return p;
+}
 
 PointCloud getAndFilterCloud(const string &filename)
 {
@@ -86,12 +104,7 @@ PointCloud getAndFilterCloud(const string &filename)
 
     for (PointId i = 0; i < view->size(); ++i)
     {
-        Point p;
-        PointRef pdalPoint = view->point(i);
-        p.x = pdalPoint.getFieldAs<double>(Dimension::Id::X);
-        p.y = pdalPoint.getFieldAs<double>(Dimension::Id::Y);
-        p.z = pdalPoint.getFieldAs<double>(Dimension::Id::Z);
-
+        Point p = pointProcessor(view->point(i));
         cloud.push_back(p);
     }
 
@@ -133,10 +146,7 @@ PointCloud getCloud(const string &filename)
     int lastPercentage = 0;
     auto processOne = [&] (PointRef & pdalPoint)
     {
-        Point p;
-        p.x = pdalPoint.getFieldAs<double>(Dimension::Id::X);
-        p.y = pdalPoint.getFieldAs<double>(Dimension::Id::Y);
-        p.z = pdalPoint.getFieldAs<double>(Dimension::Id::Z);
+        Point p = pointProcessor(pdalPoint);
 
         auto currentPercentage = static_cast<int>(counter / header.pointCount() * 100);
         if (lastPercentage < currentPercentage)
@@ -174,30 +184,37 @@ void writeToFile(const PointCloud &cloud, const string &filename)
     table.layout()->registerDim(Dimension::Id::X);
     table.layout()->registerDim(Dimension::Id::Y);
     table.layout()->registerDim(Dimension::Id::Z);
+    table.layout()->registerDim(Dimension::Id::Red);
+    table.layout()->registerDim(Dimension::Id::Green);
+    table.layout()->registerDim(Dimension::Id::Blue);
 
     PointView view(table);
 
     auto index = 0u;
+    auto counter = 0.0;
     auto lastPercentage = 0.0;
-    auto processOne = [&](PointRef & point)
+    auto processOne = [&](PointRef & pdalPoint)
     {
-        auto currentPercentage = static_cast<int>(index / cloud.size() * 100);
+        auto currentPercentage = static_cast<int>(counter / cloud.size() * 100);
         if (lastPercentage < currentPercentage)
         {
             lastPercentage = currentPercentage;
             cout << currentPercentage << endl;
         }
-        index++;
+        ++counter;
 
         if (index < cloud.size())
         {
-            auto x = cloud[index].x;
-            auto y = cloud[index].y;
-            auto z = cloud[index].z;
+            auto point = cloud[index];
 
-            point.setField(Dimension::Id::X, x);
-            point.setField(Dimension::Id::Y, y);
-            point.setField(Dimension::Id::Z, z);
+            pdalPoint.setField(Dimension::Id::X, point.x);
+            pdalPoint.setField(Dimension::Id::Y, point.y);
+            pdalPoint.setField(Dimension::Id::Z, point.z);
+
+            for (auto [dimension, value] : point.rgb)
+            {
+                    pdalPoint.setField(dimension, value);
+            }
 
             ++index;
 
@@ -224,13 +241,15 @@ void writeToFile(const PointCloud &cloud, const string &filename)
 
 PointCloud mergeClouds(vector<PointCloud> && clouds)
 {
+    cout << "Merging clouds..." << endl;
+
     auto foldCloudSizes = [](auto a, auto b)
     {
         return a + b.size();
     };
 
     PointCloud outCloud;
-    outCloud.reserve(std::accumulate(clouds.begin(), clouds.end(), (unsigned long)0, foldCloudSizes));
+    outCloud.reserve(std::accumulate(clouds.begin(), clouds.end(), (size_t)0, foldCloudSizes));
 
     for (auto cloud : clouds)
     {
@@ -242,7 +261,6 @@ PointCloud mergeClouds(vector<PointCloud> && clouds)
 
 int main()
 {
-
     PointCloud cloud1 = getCloud("FB17_3765_filtered.laz");
 
     PointCloud cloud2 = getCloud("filter_test.laz");
