@@ -11,6 +11,8 @@
 #include <pdal/filters/RangeFilter.hpp>
 #include <pdal/filters/MergeFilter.hpp>
 #include <pdal/filters/StreamCallbackFilter.hpp>
+#include <pdal/io/GDALGrid.hpp>
+#include <pdal/io/GDALWriter.hpp>
 
 using std::cout;
 using std::endl;
@@ -24,7 +26,7 @@ struct Point
     double y = 0;
     double z = 0;
 
-    std::map<Dimension::Id, uint16_t> rgb;
+    std::map<Dimension::Id, uint16_t> rgb{};
 };
 
 using PointCloud = vector<Point>;
@@ -170,7 +172,7 @@ PointCloud getCloud(const string &filename)
     return cloud;
 }
 
-void writeToFile(const PointCloud &cloud, const string &filename)
+void writeLAZ(const PointCloud &cloud, const string &filename)
 {
     cout << "Writing to " << filename << "..." << endl;
 
@@ -239,6 +241,76 @@ void writeToFile(const PointCloud &cloud, const string &filename)
     writer.execute(table);
 }
 
+void writeGdal(PointCloud & cloud, const string &filename)
+{
+    cout << "Writing to " << filename << "..." << endl;
+
+    if (cloud.empty())
+    {
+        cout << "Error: Point Cloud Empty" << endl;
+        return;
+    }
+
+    FixedPointTable table(100);
+
+    table.layout()->registerDim(Dimension::Id::X);
+    table.layout()->registerDim(Dimension::Id::Y);
+    table.layout()->registerDim(Dimension::Id::Z);
+    table.layout()->registerDim(Dimension::Id::Red);
+    table.layout()->registerDim(Dimension::Id::Green);
+    table.layout()->registerDim(Dimension::Id::Blue);
+
+    auto index = 0u;
+    auto counter = 0.0;
+    auto lastPercentage = 0.0;
+    auto processOne = [&](PointRef & pdalPoint)
+    {
+        auto currentPercentage = static_cast<int>(counter / cloud.size() * 100);
+        if (lastPercentage < currentPercentage)
+        {
+            lastPercentage = currentPercentage;
+            cout << currentPercentage << endl;
+        }
+        ++counter;
+
+        if (index < cloud.size())
+        {
+            auto point = cloud[index];
+
+            pdalPoint.setField(Dimension::Id::X, point.x);
+            pdalPoint.setField(Dimension::Id::Y, point.y);
+            pdalPoint.setField(Dimension::Id::Z, point.z);
+
+            for (auto [dimension, value] : point.rgb)
+            {
+                pdalPoint.setField(dimension, value);
+            }
+
+            ++index;
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    };
+
+    StreamCallbackFilter callback;
+    callback.setCallback(processOne);
+
+    Options options;
+    options.add("gdaldriver", "GTiff");
+    options.add("output_type", "all");
+    options.add("filename", filename);
+    options.add("resolution", 2.0);
+    GDALWriter writer;
+    writer.setInput(callback);
+    writer.addOptions(options);
+    writer.prepare(table);
+    writer.execute(table);
+}
+
 PointCloud mergeClouds(vector<PointCloud> && clouds)
 {
     cout << "Merging clouds..." << endl;
@@ -267,7 +339,7 @@ int main()
 
     PointCloud cloud_out = mergeClouds({cloud1, cloud2});
 
-    writeToFile(cloud_out, "merge_test.laz");
+    writeGdal(cloud_out, "tiftest.tif");
 
     return 0;
 }
