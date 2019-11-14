@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
 #include <numeric>
 #include <map>
 #include <pdal/io/LasReader.hpp>
@@ -9,10 +8,10 @@
 #include <pdal/filters/AssignFilter.hpp>
 #include <pdal/filters/SMRFilter.hpp>
 #include <pdal/filters/RangeFilter.hpp>
-#include <pdal/filters/MergeFilter.hpp>
 #include <pdal/filters/StreamCallbackFilter.hpp>
 #include <pdal/io/GDALGrid.hpp>
 #include <pdal/io/GDALWriter.hpp>
+#include <pdal/io/GDALReader.hpp>
 
 using std::cout;
 using std::endl;
@@ -39,9 +38,9 @@ Point pointProcessor(const PointRef & pdalPoint)
     p.y = pdalPoint.getFieldAs<double>(Dimension::Id::Y);
     p.z = pdalPoint.getFieldAs<double>(Dimension::Id::Z);
 
-    p.rgb.insert({Dimension::Id::Red, 255});
-    p.rgb.insert({Dimension::Id::Green, 255});
-    p.rgb.insert({Dimension::Id::Blue, 255});
+    p.rgb.insert({Dimension::Id::Red, pdalPoint.getFieldAs<int>(Dimension::Id::Red)});
+    p.rgb.insert({Dimension::Id::Green, pdalPoint.getFieldAs<int>(Dimension::Id::Green)});
+    p.rgb.insert({Dimension::Id::Blue, pdalPoint.getFieldAs<int>(Dimension::Id::Blue)});
 
     return p;
 }
@@ -101,6 +100,7 @@ PointCloud getAndFilterCloud(const string &filename)
     PointViewSet set = range.execute(table);
 
     PointViewPtr view = *(set.begin());
+
     PointCloud cloud;
     cloud.reserve(view->size());
 
@@ -172,6 +172,52 @@ PointCloud getCloud(const string &filename)
     return cloud;
 }
 
+PointCloud getTIFF(const string &filename)
+{
+    cout << "Reading " << filename << "..." << endl;
+
+    GDALReader reader;
+
+    Options options;
+    options.add("filename", filename);
+    options.add("header", "z");
+    reader.setOptions(options);
+
+    PointTable table;
+    reader.prepare(table);
+
+    string utmProj4 = "+proj=utm +zone=6 +ellps=WGS84 +datum=WGS84 +units=m +no_defs";
+    SpatialReference newCoordSystem(utmProj4);
+
+    cout << "File has " << reader.preview().m_pointCount << " points" << endl;
+
+    Options filterOptions;
+    filterOptions.add("in_srs", reader.getSpatialReference());
+    filterOptions.add("out_srs", newCoordSystem.getProj4());
+
+    ReprojectionFilter repro;
+    repro.addOptions(filterOptions);
+    repro.setInput(reader);
+    repro.prepare(table);
+
+    PointCloud cloud;
+    cloud.reserve(reader.preview().m_pointCount);
+
+    PointViewSet set = repro.execute(table);
+    PointViewPtr view = *(set.begin());
+
+    cloud.reserve(view->size());
+
+    for (PointId i = 0; i < view->size(); ++i)
+    {
+        Point p = pointProcessor(view->point(i));
+
+        cloud.push_back(p);
+    }
+
+    return cloud;
+}
+
 void writeLAZ(const PointCloud &cloud, const string &filename)
 {
     cout << "Writing to " << filename << "..." << endl;
@@ -189,8 +235,6 @@ void writeLAZ(const PointCloud &cloud, const string &filename)
     table.layout()->registerDim(Dimension::Id::Red);
     table.layout()->registerDim(Dimension::Id::Green);
     table.layout()->registerDim(Dimension::Id::Blue);
-
-    PointView view(table);
 
     auto index = 0u;
     auto counter = 0.0;
@@ -281,11 +325,6 @@ void writeGdal(PointCloud & cloud, const string &filename)
             pdalPoint.setField(Dimension::Id::Y, point.y);
             pdalPoint.setField(Dimension::Id::Z, point.z);
 
-            for (auto [dimension, value] : point.rgb)
-            {
-                pdalPoint.setField(dimension, value);
-            }
-
             ++index;
 
             return true;
@@ -333,13 +372,13 @@ PointCloud mergeClouds(vector<PointCloud> && clouds)
 
 int main()
 {
-    PointCloud cloud1 = getCloud("FB17_3765_filtered.laz");
+    auto cloud1 = getTIFF("../bh_FB17_3764.tif");
 
-    PointCloud cloud2 = getCloud("filter_test.laz");
+    auto cloud2 = getTIFF("../bh_FB17_3765.tif");
 
-    PointCloud cloud_out = mergeClouds({cloud1, cloud2});
+    auto cloud_out = mergeClouds({cloud1, cloud2});
 
-    writeGdal(cloud_out, "tiftest.tif");
+    writeGdal(cloud_out, "merge_test.tif");
 
     return 0;
 }
