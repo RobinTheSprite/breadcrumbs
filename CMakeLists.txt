@@ -8,7 +8,9 @@ include_directories(${PDAL_INCLUDE_DIRS})
 link_directories(${PDAL_LIBRARY_DIRS})
 add_definitions(${PDAL_DEFINITIONS})
 
+find_package(TIFF REQUIRED)
+
 add_executable(breadcrumbs main.cpp)
 target_include_directories(breadcrumbs PRIVATE
         ${PDAL_INCLUDE_DIRS})
-target_link_libraries(breadcrumbs PRIVATE ${PDAL_LIBRARIES} ${LASZIP_LIBRARY})
+target_link_libraries(breadcrumbs PRIVATE ${PDAL_LIBRARIES} ${LASZIP_LIBRARY} ${TIFF_LIBRARIES})
