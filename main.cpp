@@ -57,12 +57,12 @@ vector<vector<float>> getMatrix(const string & filename)
         {
             for (x = 0; x < imageWidth; x += tileWidth)
             {
-                TIFFReadTile(tiff, buf, x, y, 0, 1);
-                for (auto i = y; i < y + tileLength && i < imageLength; ++i)
+                TIFFReadTile(tiff, buf, x, y, 0, 0);
+                for (auto tileY = y; tileY < y + tileLength && tileY < imageLength; ++tileY)
                 {
-                    for (auto j = x; j < x + tileWidth && j < imageWidth; ++j)
+                    for (auto tileX = x; tileX < x + tileWidth && tileX < imageWidth; ++tileX)
                     {
-                        matrix[i][j] = ((float *)buf)[(j + i*tileWidth) % 128];
+                        matrix[tileY][tileX] = ((float *)buf)[tileX - x + (tileY - y) * tileWidth];
                     }
                 }
             }
