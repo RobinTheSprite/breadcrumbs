@@ -43,27 +43,43 @@ vector<vector<float>> getMatrix(const string & filename)
     if (tiff)
     {
         uint32 imageWidth, imageLength;
-        uint32 tileWidth, tileLength;
-        uint32 x, y;
-        tdata_t buf;
-
         TIFFGetField(tiff, TIFFTAG_IMAGEWIDTH, &imageWidth);
         TIFFGetField(tiff, TIFFTAG_IMAGELENGTH, &imageLength);
-        TIFFGetField(tiff, TIFFTAG_TILEWIDTH, &tileWidth);
-        TIFFGetField(tiff, TIFFTAG_TILELENGTH, &tileLength);
-        buf = _TIFFmalloc(TIFFTileSize(tiff));
         matrix = vector<vector<float>>(imageLength, vector<float>(imageWidth));
-        for (y = 0; y < imageLength; y += tileLength)
+        tdata_t buf;
+
+        if (TIFFIsTiled(tiff))
         {
-            for (x = 0; x < imageWidth; x += tileWidth)
+            uint32 tileWidth, tileLength;
+            uint32 x, y;
+
+            TIFFGetField(tiff, TIFFTAG_TILEWIDTH, &tileWidth);
+            TIFFGetField(tiff, TIFFTAG_TILELENGTH, &tileLength);
+            buf = _TIFFmalloc(TIFFTileSize(tiff));
+            for (y = 0; y < imageLength; y += tileLength)
             {
-                TIFFReadTile(tiff, buf, x, y, 0, 0);
-                for (auto tileY = y; tileY < y + tileLength && tileY < imageLength; ++tileY)
+                for (x = 0; x < imageWidth; x += tileWidth)
                 {
-                    for (auto tileX = x; tileX < x + tileWidth && tileX < imageWidth; ++tileX)
+                    TIFFReadTile(tiff, buf, x, y, 0, 0);
+                    for (auto tileY = y; tileY < y + tileLength && tileY < imageLength; ++tileY)
                     {
-                        matrix[tileY][tileX] = ((float *)buf)[tileX - x + (tileY - y) * tileWidth];
+                        for (auto tileX = x; tileX < x + tileWidth && tileX < imageWidth; ++tileX)
+                        {
+                            matrix[tileY][tileX] = ((float *) buf)[tileX - x + (tileY - y) * tileWidth];
+                        }
                     }
+                }
+            }
+        }
+        else
+        {
+            buf = _TIFFmalloc(TIFFScanlineSize(tiff));
+            for (uint32 imageRow = 0; imageRow < imageLength; imageRow++)
+            {
+                TIFFReadScanline(tiff, buf, imageRow, 0);
+                for (auto i = 0; i < imageWidth; ++i)
+                {
+                    matrix[imageRow][i] = ((float *)buf)[i];
                 }
             }
         }
@@ -236,15 +252,7 @@ vector<vector<int>> getShortestPath(const vector<vector<float>> & matrix, Matrix
 
 int main()
 {
-//    auto cloud1 = getTIFF("../bh_FB17_3764.tif");
-//
-//    auto cloud2 = getTIFF("../bh_FB17_3765.tif");
-//
-//    auto cloud_out = mergeClouds({cloud1, cloud2});
-//
-//    writeGdal(cloud_out, "merge_test.tif");
-
-    auto matrix = getMatrix("../bh_FB17_3764.tif");
+    auto matrix = getMatrix("inclined_plane.tif");
 
     cout << "Rows: " << matrix.size() << endl;
 
