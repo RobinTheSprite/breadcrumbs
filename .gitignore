@@ -1,0 +1,11 @@
+/.idea/
+/cmake-build-debug/
+/libtiff/
+/bh_FB17_3764.tif.aux.xml
+/bh_FB17_3764.tif
+/bh_FB17_3765.tif
+/bh_FB17_3765.tif.aux.xml
+/FB17_3764.laz
+/FB17_3765.laz
+/GDALGrid.cpp
+/GDALGrid.hpp
