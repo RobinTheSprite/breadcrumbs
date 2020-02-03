@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <numeric>
 #include <tiffio.h>
 
 #include "LasOps.h"
