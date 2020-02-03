@@ -190,7 +190,7 @@ struct MatrixPoint
     float totalCost;
 };
 
-vector<vector<int>> getShortestPath(const vector<vector<float>> & matrix, MatrixPoint startingPoint, MatrixPoint target)
+vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix, MatrixPoint startingPoint, MatrixPoint target)
 {
     auto differenceGreater = [](auto a, auto b){return a.totalCost > b.totalCost;};
     using PointQueue = priority_queue<MatrixPoint, vector<MatrixPoint>, decltype(differenceGreater)>;
@@ -201,7 +201,7 @@ vector<vector<int>> getShortestPath(const vector<vector<float>> & matrix, Matrix
     startingPoint.totalCost = 0;
     openSet.push(startingPoint);
 
-    auto pathMatrix = vector<vector<int>>(matrix.size(), vector<int>(matrix[0].size(), 0));
+    auto pathMatrix = vector<vector<int>>(terrainMatrix.size(), vector<int>(terrainMatrix[0].size(), 0));
     auto visitedPoint = 100;
 
     vector<MatrixPoint> surroundingPoints(4);
@@ -222,7 +222,7 @@ vector<vector<int>> getShortestPath(const vector<vector<float>> & matrix, Matrix
                              {currentPoint.x + 1, currentPoint.y - 1}
         };
 
-        auto inBounds = [matrix](auto n) { return n > -1 && n < matrix.size() && n < matrix[0].size(); };
+        auto inBounds = [terrainMatrix](auto n) { return n > -1 && n < terrainMatrix.size() && n < terrainMatrix[0].size(); };
         for (const auto &point : surroundingPoints)
         {
             if (point.x == target.x && point.y == target.y)
@@ -236,15 +236,20 @@ vector<vector<int>> getShortestPath(const vector<vector<float>> & matrix, Matrix
             {
                 if (pathMatrix[point.y][point.x] == 0)
                 {
-                    auto difference = abs(matrix[point.y][point.x] - matrix[currentPoint.y][currentPoint.x]);
+                    auto difference = abs(terrainMatrix[point.y][point.x] - terrainMatrix[currentPoint.y][currentPoint.x]);
+                    auto heightToTarget = abs(terrainMatrix[target.y][target.x] - terrainMatrix[currentPoint.y][currentPoint.x]);
                     auto movementCost = difference + point.movementCost;
-                    float heuristic = std::max(abs(target.x - currentPoint.x), abs(target.y - currentPoint.y));
+//                    float heuristic = std::max(abs(target.x - currentPoint.x), abs(target.y - currentPoint.y)); //Diagonal distance
+                    float heuristic = sqrt((target.x - currentPoint.x)*(target.x - currentPoint.x) +
+                            (target.y - currentPoint.y)*(target.y - currentPoint.y) +
+                                                   (int)(heightToTarget*heightToTarget)); //Euclidean Distance
+
                     openSet.push({point.x, point.y, movementCost, heuristic, movementCost + heuristic});
+
+                    pathMatrix[currentPoint.y][currentPoint.x] = visitedPoint;
                 }
             }
         }
-
-        pathMatrix[currentPoint.y][currentPoint.x] = visitedPoint;
     }
 
     return pathMatrix;
