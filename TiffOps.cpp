@@ -114,9 +114,9 @@ void writeMatrixToTIFF(vector<vector<float>> matrix, const string & filename)
     _TIFFfree(buf);
 }
 
-void writePathToTIFF(vector<vector<int>> matrix)
+void writePathToTIFF(std::vector<std::vector<int>> matrix, std::string filename)
 {
-    TIFF * out = TIFFOpen("path.tif", "w");
+    TIFF * out = TIFFOpen(filename.data(), "w");
 
     int width = matrix[0].size();
     int height = matrix.size();

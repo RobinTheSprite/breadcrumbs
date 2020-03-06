@@ -3,6 +3,7 @@
 #include <string>
 #include <numeric>
 #include <tiffio.h>
+#include <memory>
 
 #include "LasOps.h"
 #include "TiffOps.h"
@@ -120,7 +121,7 @@ int main()
 
     auto pathMatrix = getShortestPath(matrix, {285, 125}, {250, 100});
 
-    writePathToTIFF(pathMatrix);
+    writePathToTIFF(pathMatrix, "path.tif");
 
     return 0;
 }

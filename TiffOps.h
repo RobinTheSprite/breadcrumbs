@@ -12,6 +12,6 @@ std::vector<std::vector<float>> getMatrix(const std::string & filename);
 
 void writeMatrixToTIFF(std::vector<std::vector<float>> matrix, const std::string & filename);
 
-void writePathToTIFF(std::vector<std::vector<int>> matrix);
+void writePathToTIFF(std::vector<std::vector<int>> matrix, std::string filename);
 
 #endif //BREADCRUMBS_TIFFOPS_H
