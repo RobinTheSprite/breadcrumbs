@@ -39,73 +39,122 @@ PointCloud mergeClouds(vector<PointCloud> && clouds)
 
 struct MatrixPoint
 {
-    int x;
-    int y;
-    float movementCost;
-    float heuristic;
-    float totalCost;
+    long x;
+    long y;
+    double movementCost;
+    double totalCost;
+    std::shared_ptr<MatrixPoint> parent;
 };
 
-vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix, MatrixPoint startingPoint, MatrixPoint target)
+
+bool inBounds(const vector<vector<float>>& matrix, long n)
+{
+    return n > -1 && n < matrix.size() && n < matrix[0].size();
+}
+
+
+void getSurroundingPoints(const vector<vector<float>>& matrix, const MatrixPoint& currentPoint, vector<MatrixPoint> & surroundingPoints)
+{
+    auto stepSize = 1;
+
+    auto writeIndex = 0;
+    for (auto x = currentPoint.x - stepSize; x <= currentPoint.x + stepSize; x += stepSize)
+    {
+        for (auto y = currentPoint.y - stepSize; y <= currentPoint.y + stepSize; y += stepSize)
+        {
+            if(!(x == currentPoint.x && y == currentPoint.y) && inBounds(matrix, x) && inBounds(matrix, y))
+            {
+                surroundingPoints[writeIndex] = {x, y, 0, 0, std::make_shared<MatrixPoint>(currentPoint)};
+                ++writeIndex;
+            }
+        }
+    }
+
+    surroundingPoints.resize(writeIndex);
+}
+
+
+double distance(const MatrixPoint &a, const MatrixPoint &b, double height, double xScale, double yScale, double zScale)
+{
+    auto xScaled = (double)(b.x - a.x) * xScale;
+    auto yScaled = (double)(b.y - a.y) * yScale;
+    auto zScaled = height * zScale;
+
+    return sqrt(xScaled*xScaled + yScaled*yScaled + zScaled*zScaled);
+}
+
+
+double scaledDifference(const vector<vector<float>> & matrix, const MatrixPoint& a, const MatrixPoint& b, double unitsPerPixel)
+{
+    double scaleFactor = 1 / unitsPerPixel;
+    return abs(matrix[b.y][b.x] - matrix[a.y][a.x]) * scaleFactor;
+}
+
+
+vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix, MatrixPoint startingPoint, const MatrixPoint& target)
 {
     auto differenceGreater = [](auto a, auto b){return a.totalCost > b.totalCost;};
     using PointQueue = priority_queue<MatrixPoint, vector<MatrixPoint>, decltype(differenceGreater)>;
     PointQueue openSet(differenceGreater);
+    vector<vector<double>> closedSet(terrainMatrix.size(), vector<double>(terrainMatrix.size(), std::numeric_limits<double>::max()));
 
-    startingPoint.heuristic = 0;
     startingPoint.movementCost = 0;
     startingPoint.totalCost = 0;
+    startingPoint.parent = nullptr;
     openSet.push(startingPoint);
 
     auto pathMatrix = vector<vector<int>>(terrainMatrix.size(), vector<int>(terrainMatrix[0].size(), 0));
     auto visitedPoint = 100;
+    pathMatrix[startingPoint.y][startingPoint.x] = visitedPoint;
 
-    vector<MatrixPoint> surroundingPoints(4);
+    vector<MatrixPoint> surroundingPoints(8, {0, 0, 0, 0, nullptr});
 
+    shared_ptr<MatrixPoint> finishingPoint;
     bool stop = false;
-    while (!stop)
+    while (!stop && !openSet.empty())
     {
         auto currentPoint = openSet.top();
         openSet.pop();
 
-        surroundingPoints = {{currentPoint.x + 1, currentPoint.y},
-                             {currentPoint.x - 1, currentPoint.y},
-                             {currentPoint.x,     currentPoint.y + 1},
-                             {currentPoint.x,     currentPoint.y - 1},
-                             {currentPoint.x + 1, currentPoint.y + 1},
-                             {currentPoint.x - 1, currentPoint.y - 1},
-                             {currentPoint.x - 1, currentPoint.y + 1},
-                             {currentPoint.x + 1, currentPoint.y - 1}
-        };
+        surroundingPoints.resize(8);
+        getSurroundingPoints(terrainMatrix, currentPoint, surroundingPoints);
 
-        auto inBounds = [terrainMatrix](auto n) { return n > -1 && n < terrainMatrix.size() && n < terrainMatrix[0].size(); };
-        for (const auto &point : surroundingPoints)
+        for (auto &successor : surroundingPoints)
         {
-            if (point.x == target.x && point.y == target.y)
+            finishingPoint = std::make_shared<MatrixPoint>(successor);
+            if (successor.x == target.x && successor.y == target.y)
             {
-                pathMatrix[point.y][point.x] = visitedPoint;
                 stop = true;
                 break;
             }
 
-            if (inBounds(point.x) && inBounds(point.y))
+            if (pathMatrix[successor.y][successor.x] == 0)
             {
-                if (pathMatrix[point.y][point.x] == 0)
+                pathMatrix[successor.y][successor.x] = visitedPoint;
+                double heightToSuccessor = scaledDifference(terrainMatrix, currentPoint, successor, 5);
+                successor.movementCost = (distance(currentPoint, successor, heightToSuccessor, 1, 1, 1)
+                                        + currentPoint.movementCost);
+
+                double heightToTarget = scaledDifference(terrainMatrix, successor, target, 5);
+                double distToTarget = distance(successor, target, heightToTarget, 1, 1, 1);
+
+                successor.totalCost = successor.movementCost + distToTarget;
+
+                if (heightToSuccessor / distance(currentPoint, successor, 0, 1, 1, 1) < 0.08)
                 {
-                    auto difference = abs(terrainMatrix[point.y][point.x] - terrainMatrix[currentPoint.y][currentPoint.x]);
-                    auto heightToTarget = abs(terrainMatrix[target.y][target.x] - terrainMatrix[currentPoint.y][currentPoint.x]);
-                    auto movementCost = difference + point.movementCost;
-//                    float heuristic = std::max(abs(target.x - currentPoint.x), abs(target.y - currentPoint.y)); //Diagonal distance
-                    float heuristic = sqrt((target.x - currentPoint.x)*(target.x - currentPoint.x) +
-                            (target.y - currentPoint.y)*(target.y - currentPoint.y) +
-                                                   (int)(heightToTarget*heightToTarget)); //Euclidean Distance
-
-                    openSet.push({point.x, point.y, movementCost, heuristic, movementCost + heuristic});
-
-                    pathMatrix[currentPoint.y][currentPoint.x] = visitedPoint;
+                    successor.parent = std::make_unique<MatrixPoint>(currentPoint);
+                    openSet.push(successor);
                 }
             }
         }
+        closedSet[currentPoint.y][currentPoint.x] = currentPoint.totalCost;
+    }
+
+    std::fill(pathMatrix.begin(), pathMatrix.end(), std::vector<int>(pathMatrix.size(), 0));
+    while(finishingPoint)
+    {
+        pathMatrix[finishingPoint->y][finishingPoint->x] = visitedPoint;
+        finishingPoint = finishingPoint->parent;
     }
 
     return pathMatrix;
@@ -119,7 +168,7 @@ int main()
 
     cout << "Columns: " << matrix[0].size() << endl;
 
-    auto pathMatrix = getShortestPath(matrix, {285, 125}, {250, 100});
+    auto pathMatrix = getShortestPath(matrix, {470, 420}, {0, 0}); //{470, 420}, {200, 230}
 
     writePathToTIFF(pathMatrix, "path.tif");
 
