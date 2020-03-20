@@ -206,7 +206,7 @@ int main(int argc, char * argv [])
     ifstream jsonFile("params.json");
     if (!jsonFile)
     {
-        cout << "Error Reading Input from JSON file" << endl;
+        cout << "Error Reading Input from params.json" << endl;
         return -1;
     }
 
