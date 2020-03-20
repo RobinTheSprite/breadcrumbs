@@ -14,6 +14,7 @@ using std::endl;
 
 vector<vector<float>> getMatrix(const string & filename)
 {
+    TIFFSetWarningHandler(nullptr);
     TIFF * tiff = TIFFOpen(filename.data(), "r");
     vector<vector<float>> matrix;
     if (tiff)
