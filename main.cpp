@@ -184,9 +184,15 @@ vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix,
     return finalMatrix;
 }
 
-int main()
+int main(int argc, char * argv [])
 {
-    auto matrix = getMatrix("donnelly_dome.tif"); //../bh_FB17_3764.tif
+    if (argc < 2)
+    {
+        cout << "Specify a TIFF to use" << endl;
+        return -1;
+    }
+
+    auto matrix = getMatrix(argv[1]); //../bh_FB17_3764.tif
 
     if (matrix.empty())
     {
