@@ -7,8 +7,6 @@
 #include <iostream>
 #include "tiffio.h"
 
-#include "TiffOps.h"
-
 using std::vector;
 using std::string;
 using std::cout;

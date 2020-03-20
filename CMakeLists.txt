@@ -10,7 +10,5 @@ add_definitions(${PDAL_DEFINITIONS})
 
 find_package(TIFF REQUIRED)
 
-add_executable(breadcrumbs main.cpp TiffOps.cpp)
-target_include_directories(breadcrumbs PRIVATE
-        ${PDAL_INCLUDE_DIRS})
-target_link_libraries(breadcrumbs PRIVATE ${PDAL_LIBRARIES} ${LASZIP_LIBRARY} ${TIFF_LIBRARIES})
+add_executable(breadcrumbs main.cpp TiffOps.cpp jsoncpp.cpp)
+target_link_libraries(breadcrumbs ${PDAL_LIBRARIES} ${LASZIP_LIBRARY} ${TIFF_LIBRARIES})
