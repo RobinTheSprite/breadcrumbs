@@ -188,11 +188,21 @@ int main()
 {
     auto matrix = getMatrix("donnelly_dome.tif"); //../bh_FB17_3764.tif
 
+    if (matrix.empty())
+    {
+        return -1;
+    }
+
     cout << "Rows: " << matrix.size() << endl;
 
     cout << "Columns: " << matrix[0].size() << endl;
 
     ifstream jsonFile("params.json");
+    if (!jsonFile)
+    {
+        cout << "Error Reading Input from JSON file" << endl;
+        return -1;
+    }
 
     Json::CharReaderBuilder builder;
     builder["collectComments"] = false;
