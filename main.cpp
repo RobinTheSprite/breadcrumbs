@@ -158,14 +158,14 @@ vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix,
                     double heightToSuccessor = scaledDifference(terrainMatrix, currentPoint, successor, weights.unitsPerPixel);
                     successor.movementCost = (distance(currentPoint, successor, heightToSuccessor,
                             weights.movementCostXY, weights.movementCostXY, weights.movementCostZ)
-                                              + currentPoint.movementCost);
+                                              + currentPoint.movementCost
+                                              + gradeCost(currentPoint, successor, heightToSuccessor, weights.gradeCost));
 
                     double heightToTarget = scaledDifference(terrainMatrix, successor, target, weights.unitsPerPixel);
                     double distToTarget = distance(successor, target, heightToTarget,
                             weights.heuristicXY, weights.heuristicXY, weights.heuristicZ);
 
-                    successor.totalCost = successor.movementCost + distToTarget
-                                          + gradeCost(currentPoint, successor, heightToSuccessor, weights.gradeCost);
+                    successor.totalCost = successor.movementCost + distToTarget;
 
                     successor.parent = std::make_unique<MatrixPoint>(currentPoint);
                     openSet.push(successor);
