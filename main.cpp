@@ -62,9 +62,9 @@ struct Weights
 };
 
 
-bool inBounds(const vector<vector<float>>& matrix, long n)
+bool inBounds(const vector<vector<float>>& matrix, const MatrixPoint& p)
 {
-    return n > -1 && n < matrix.size() && n < matrix[0].size();
+    return (p.x > -1 && p.y > -1) && p.y < matrix.size() && p.x < matrix[0].size();
 }
 
 
@@ -73,11 +73,11 @@ void getSurroundingPoints(const vector<vector<float>>& matrix, const MatrixPoint
     auto stepSize = 1;
 
     auto writeIndex = 0;
-    for (auto x = currentPoint.x - stepSize; x <= currentPoint.x + stepSize; x += stepSize)
+    for (long x = currentPoint.x - stepSize; x <= currentPoint.x + stepSize; x += stepSize)
     {
-        for (auto y = currentPoint.y - stepSize; y <= currentPoint.y + stepSize; y += stepSize)
+        for (long y = currentPoint.y - stepSize; y <= currentPoint.y + stepSize; y += stepSize)
         {
-            if(!(x == currentPoint.x && y == currentPoint.y) && inBounds(matrix, x) && inBounds(matrix, y))
+            if(!(x == currentPoint.x && y == currentPoint.y) && inBounds(matrix, {x, y}))
             {
                 surroundingPoints[writeIndex] = {x, y, 0, 0, std::make_shared<MatrixPoint>(currentPoint)};
                 ++writeIndex;
