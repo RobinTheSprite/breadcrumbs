@@ -48,12 +48,14 @@ int main(int argc, char * argv [])
         return -1;
     }
 
-    auto matrix = getMatrix(argv[1]); //../bh_FB17_3764.tif
+    auto matrix = getMatrix(argv[1]);
 
     if (matrix.empty())
     {
         return -1;
     }
+
+    cout << argv[1] << endl;
 
     cout << "Rows: " << matrix.size() << endl;
 
