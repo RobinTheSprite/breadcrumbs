@@ -1,9 +1,8 @@
 #include <iostream>
-#include <vector>
 #include <string>
-#include <numeric>
-#include <tiffio.h>
 #include <sys/stat.h>
+#include <deque>
+#include <fstream>
 
 #include "json.h"
 #include "LasOps.h"

@@ -29,6 +29,8 @@ struct Point
 
 using PointCloud = vector<Point>;
 
+PointCloud mergeClouds(vector<PointCloud> && clouds);
+
 Point pointProcessor(const PointRef & pdalPoint);
 
 PointCloud getAndFilterCloud(const string &filename);

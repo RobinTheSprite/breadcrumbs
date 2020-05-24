@@ -4,6 +4,26 @@
 
 #include "LasOps.h"
 
+PointCloud mergeClouds(vector<PointCloud> && clouds)
+{
+    cout << "Merging clouds..." << endl;
+
+    auto foldCloudSizes = [](auto a, auto b)
+    {
+        return a + b.size();
+    };
+
+    PointCloud outCloud;
+    outCloud.reserve(std::accumulate(clouds.begin(), clouds.end(), (size_t)0, foldCloudSizes));
+
+    for (auto cloud : clouds)
+    {
+        outCloud.insert(outCloud.end(), cloud.begin(), cloud.end());
+    }
+
+    return outCloud;
+}
+
 Point pointProcessor(const PointRef & pdalPoint)
 {
     Point p;
