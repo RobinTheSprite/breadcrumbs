@@ -3,6 +3,7 @@
 #include <string>
 #include <numeric>
 #include <tiffio.h>
+#include <sys/stat.h>
 
 #include "json.h"
 #include "LasOps.h"
@@ -83,16 +84,80 @@ int main(int argc, char * argv [])
 
     auto weightsJson = root["weights"];
 
-    Weights weights = {weightsJson["unitsPerPixel"].asInt(),
-                       weightsJson["gradeCost"].asInt(),
-                       weightsJson["movementCost"]["xy"].asDouble(),
-                       weightsJson["movementCost"]["z"].asDouble(),
-                       weightsJson["heuristic"]["xy"].asDouble(),
-                       weightsJson["heuristic"]["z"].asDouble()};
+    if (argc == 3)
+    {
+        if (!strcmp(argv[2], "-testsuite"))
+        {
+            string dequeString;
+            for (const auto &point : points)
+            {
+                dequeString += "(" + std::to_string(point.x) + ", " + std::to_string(point.y) + ")";
+            }
 
-    auto pathMatrix = getShortestPath(matrix, points, weights); //{470, 420}, {200, 230}
+            cout << "Begin full test suite for " << argv[1] << endl;
+            cout << "at points " << dequeString << endl;
 
-    writePathToTIFF(pathMatrix, "path.tif");
+            string filepath = "./data/" + dequeString + "/";
+            int mkdirResult = mkdir("./data/", S_IRWXU);
+            if (mkdirResult != 0 && mkdirResult != EEXIST)
+            {
+                cout << "ERROR: Unable to create data directory" << endl;
+                return -1;
+            }
+
+            mkdirResult = mkdir(filepath.data(), S_IRWXU);
+            if (mkdirResult != 0 && mkdirResult != EEXIST)
+            {
+                cout << "ERROR: Unable to create directory for test run" << endl;
+                return -1;
+            }
+
+            int gradeCosts [] = {0, 10, 100, 1000};
+            for (const auto &gradeCost : gradeCosts)
+            {
+                for (int movementCostXY = 0; movementCostXY <= 10; movementCostXY += 5)
+                {
+                    for (int movementCostZ = 0; movementCostZ <= 10; movementCostZ += 5)
+                    {
+                        for (int heuristicXY = 0; heuristicXY <= 10; heuristicXY += 5)
+                        {
+                            for (int heuristicZ = 0; heuristicZ <= 10; heuristicZ += 5)
+                            {
+                                Weights weights = {
+                                        weightsJson["unitsPerPixel"].asInt(),
+                                        gradeCost,
+                                        static_cast<double>(movementCostXY),
+                                        static_cast<double>(movementCostZ),
+                                        static_cast<double>(heuristicXY),
+                                        static_cast<double>(heuristicZ)
+                                };
+
+                                auto pathMatrix = getShortestPath(matrix, points, weights);
+
+                                writePathToTIFF(pathMatrix, filepath +
+                                    "grade(" + std::to_string(gradeCost) + ")" +
+                                    "g(xy=" + std::to_string(movementCostXY) + ", z=" + std::to_string(movementCostZ) + ")" +
+                                    "h(xy=" + std::to_string(heuristicXY) + ", z=" + std::to_string(heuristicZ) + ").tif");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        Weights weights = {weightsJson["unitsPerPixel"].asInt(),
+                           weightsJson["gradeCost"].asInt(),
+                           weightsJson["movementCost"]["xy"].asDouble(),
+                           weightsJson["movementCost"]["z"].asDouble(),
+                           weightsJson["heuristic"]["xy"].asDouble(),
+                           weightsJson["heuristic"]["z"].asDouble()};
+
+        auto pathMatrix = getShortestPath(matrix, points, weights); //{470, 420}, {200, 230}
+
+        writePathToTIFF(pathMatrix, "path.tif");
+    }
 
     return 0;
 }
