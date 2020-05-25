@@ -4,8 +4,7 @@
 #include <deque>
 #include <fstream>
 
-#include "json.h"
-#include "LasOps.h"
+#include "json.hpp"
 #include "TiffOps.h"
 #include "breadcrumbs.h"
 
@@ -14,31 +13,7 @@ using std::endl;
 using std::vector;
 using std::string;
 using std::ifstream;
-
-using namespace pdal;
-
-using PointCloud = vector<Point>;
-
-PointCloud mergeClouds(vector<PointCloud> && clouds)
-{
-    cout << "Merging clouds..." << endl;
-
-    auto foldCloudSizes = [](auto a, auto b)
-    {
-        return a + b.size();
-    };
-
-    PointCloud outCloud;
-    outCloud.reserve(std::accumulate(clouds.begin(), clouds.end(), (size_t)0, foldCloudSizes));
-
-    for (auto cloud : clouds)
-    {
-        outCloud.insert(outCloud.end(), cloud.begin(), cloud.end());
-    }
-
-    return outCloud;
-}
-
+using std::deque;
 
 int main(int argc, char * argv [])
 {
@@ -68,16 +43,13 @@ int main(int argc, char * argv [])
         return -1;
     }
 
-    Json::CharReaderBuilder builder;
-    builder["collectComments"] = false;
-    Json::Value root;
-    string errors;
-    Json::parseFromStream(builder, jsonFile, &root, &errors);
+    nlohmann::json root;
+    jsonFile >> root;
 
     deque<MatrixPoint> points;
-    for (Json::ArrayIndex i = 0; i < root["points"].size(); ++i)
+    for (int i = 0; i < root["points"].size(); ++i)
     {
-        MatrixPoint m = {root["points"][i]["x"].asInt64(), root["points"][i]["y"].asInt64()};
+        MatrixPoint m = {root["points"][i]["x"].get<int>(), root["points"][i]["y"].get<int>()};
         points.push_back(m);
     }
 
@@ -123,7 +95,7 @@ int main(int argc, char * argv [])
                             for (int heuristicZ = 0; heuristicZ <= 10; heuristicZ += 5)
                             {
                                 Weights weights = {
-                                        weightsJson["unitsPerPixel"].asInt(),
+                                        weightsJson["unitsPerPixel"].get<int>(),
                                         gradeCost,
                                         static_cast<double>(movementCostXY),
                                         static_cast<double>(movementCostZ),
@@ -146,12 +118,12 @@ int main(int argc, char * argv [])
     }
     else
     {
-        Weights weights = {weightsJson["unitsPerPixel"].asInt(),
-                           weightsJson["gradeCost"].asInt(),
-                           weightsJson["movementCost"]["xy"].asDouble(),
-                           weightsJson["movementCost"]["z"].asDouble(),
-                           weightsJson["heuristic"]["xy"].asDouble(),
-                           weightsJson["heuristic"]["z"].asDouble()};
+        Weights weights = {weightsJson["unitsPerPixel"].get<int>(),
+                           weightsJson["gradeCost"].get<int>(),
+                           weightsJson["movementCost"]["xy"].get<double>(),
+                           weightsJson["movementCost"]["z"].get<double>(),
+                           weightsJson["heuristic"]["xy"].get<double>(),
+                           weightsJson["heuristic"]["z"].get<double>()};
 
         auto pathMatrix = getShortestPath(matrix, points, weights); //{470, 420}, {200, 230}
 
