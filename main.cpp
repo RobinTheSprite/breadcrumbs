@@ -70,14 +70,14 @@ int main(int argc, char * argv [])
 
             string filepath = "./data/" + dequeString + "/";
             int mkdirResult = mkdir("./data/", S_IRWXU);
-            if (mkdirResult != 0 && mkdirResult != EEXIST)
+            if (mkdirResult != 0 && errno != EEXIST)
             {
                 cout << "ERROR: Unable to create data directory" << endl;
                 return -1;
             }
 
             mkdirResult = mkdir(filepath.data(), S_IRWXU);
-            if (mkdirResult != 0 && mkdirResult != EEXIST)
+            if (mkdirResult != 0 && errno != EEXIST)
             {
                 cout << "ERROR: Unable to create directory for test run" << endl;
                 return -1;
