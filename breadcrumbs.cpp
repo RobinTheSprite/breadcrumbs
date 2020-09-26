@@ -63,7 +63,10 @@ double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, 
 
 //controlPoints needs to be a deque because the algorithm needs to pop things off the front quickly but also have
 //random access. std::queue does not have random access.
-vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix, deque<MatrixPoint> controlPoints, Weights weights)
+vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix,
+                                    const vector<vector<float>> & costMatrix,
+                                    deque<MatrixPoint> controlPoints,
+                                    Weights weights)
 {
     auto finalMatrix = vector<vector<int>>(terrainMatrix.size(), vector<int>(terrainMatrix[0].size(), 0));
     auto visitedPoint = 100;
@@ -108,11 +111,26 @@ vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix,
                 if (pathMatrix[successor.y][successor.x] == 0)
                 {
                     pathMatrix[successor.y][successor.x] = visitedPoint;
-                    double heightToSuccessor = scaledDifference(terrainMatrix, currentPoint, successor, weights.unitsPerPixel);
-                    successor.movementCost = (distance(currentPoint, successor, heightToSuccessor,
-                            weights.movementCostXY, weights.movementCostXY, weights.movementCostZ)
-                                              + currentPoint.movementCost
-                                              + gradeCost(currentPoint, successor, heightToSuccessor, weights.gradeCost));
+                    double heightToSuccessor = scaledDifference(
+                        terrainMatrix,
+                        currentPoint,
+                        successor,
+                        weights.unitsPerPixel
+                    );
+
+                    successor.movementCost = (
+                            distance(
+                                currentPoint,
+                                successor,
+                                heightToSuccessor,
+                                weights.movementCostXY,
+                                weights.movementCostXY,
+                                weights.movementCostZ
+                            )
+                          + currentPoint.movementCost
+                          + gradeCost(currentPoint, successor, heightToSuccessor, weights.gradeCost)
+                          + costMatrix[successor.y][successor.x]
+                    );
 
                     double heightToTarget = scaledDifference(terrainMatrix, successor, target, weights.unitsPerPixel);
                     double distToTarget = distance(successor, target, heightToTarget,
