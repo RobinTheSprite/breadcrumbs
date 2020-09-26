@@ -15,7 +15,10 @@ using std::string;
 using std::ifstream;
 using std::deque;
 
-int runTestSuite(char *const *argv, const vector<std::vector<float>> &matrix, const deque<MatrixPoint> &points,
+int runTestSuite(char *const *argv,
+                 const vector<std::vector<float>> &matrix,
+                 const vector<std::vector<float>> &costMatrix,
+                 const deque<MatrixPoint> &points,
                  nlohmann::json weightsJson)
 {
     string dequeString;
@@ -62,7 +65,7 @@ int runTestSuite(char *const *argv, const vector<std::vector<float>> &matrix, co
                                 static_cast<double>(heuristicZ)
                         };
 
-                        auto pathMatrix = getShortestPath(matrix, points, weights);
+                        auto pathMatrix = getShortestPath(matrix, costMatrix, points, weights);
 
                         writePathToTIFF(pathMatrix, filepath +
                             "grade(" + std::to_string(gradeCost) + ")" +
@@ -177,7 +180,7 @@ int main(int argc, char * argv [])
     {
         if (!strcmp(argv[2], "-testsuite"))
         {
-            return runTestSuite(argv, matrix, points, weightsJson);
+            return runTestSuite(argv, matrix, accumulatedLayer, points, weightsJson);
         }
     }
     else
@@ -189,7 +192,7 @@ int main(int argc, char * argv [])
                            weightsJson["heuristic"]["xy"].get<double>(),
                            weightsJson["heuristic"]["z"].get<double>()};
 
-        auto pathMatrix = getShortestPath(matrix, points, weights); //{470, 420}, {200, 230}
+        auto pathMatrix = getShortestPath(matrix, accumulatedLayer, points, weights); //{470, 420}, {200, 230}
 
         writePathToTIFF(pathMatrix, "path.tif");
     }
