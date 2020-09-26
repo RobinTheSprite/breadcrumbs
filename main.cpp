@@ -77,6 +77,56 @@ int runTestSuite(char *const *argv, const vector<std::vector<float>> &matrix, co
     return 0;
 }
 
+nlohmann::json readJSON(string filename)
+{
+    nlohmann::json root;
+    ifstream jsonFile(filename);
+    if (!jsonFile)
+    {
+        throw std::runtime_error("Error Reading Input from params.json");
+    }
+    jsonFile >> root;
+    return root;
+}
+
+vector<vector<vector<float>>> getLayers(const nlohmann::json& layersJson)
+{
+    std::vector<std::vector<vector<float>>> layers = std::vector<std::vector<vector<float>>>();
+    for (const auto & layerInfo : layersJson)
+    {
+        auto layer = getMatrix(layerInfo["filename"]);
+        float layerWeight = layerInfo["weight"];
+        for (auto & row : layer)
+        {
+            for (auto & point : row)
+            {
+                point *= layerWeight;
+            }
+        }
+
+        layers.push_back(layer);
+    }
+
+    return layers;
+}
+
+vector<vector<float>> accumulateLayers(vector<vector<vector<float>>> layers)
+{
+    vector<vector<float>> accumulatedLayers(layers[0].size(), vector<float>(layers[0][0].size(), 0));
+    for (const auto & layer : layers)
+    {
+        for (size_t y = 0; y < layer[0].size(); ++y)
+        {
+            for (size_t x = 0; x < layer.size(); ++x)
+            {
+                accumulatedLayers[y][x] += layer[y][x];
+            }
+        }
+    }
+
+    return accumulatedLayers;
+}
+
 int main(int argc, char * argv [])
 {
     if (argc < 2)
@@ -98,22 +148,28 @@ int main(int argc, char * argv [])
 
     cout << "Columns: " << matrix[0].size() << endl;
 
-    ifstream jsonFile("params.json");
-    if (!jsonFile)
+    nlohmann::json root;
+    try
     {
-        cout << "Error Reading Input from params.json" << endl;
+        root = readJSON("params.json");
+    }
+    catch(std::runtime_error &e)
+    {
+        cout << e.what() << endl;
         return -1;
     }
 
-    nlohmann::json root;
-    jsonFile >> root;
-
+    //load deque with points to run the algorithm between
     deque<MatrixPoint> points;
     for (int i = 0; i < root["points"].size(); ++i)
     {
         MatrixPoint m = {root["points"][i]["x"].get<int>(), root["points"][i]["y"].get<int>()};
         points.push_back(m);
     }
+
+    auto layersJson = root["layers"];
+    auto layers = getLayers(layersJson);
+    auto accumulatedLayer = accumulateLayers(layers);
 
     auto weightsJson = root["weights"];
 
