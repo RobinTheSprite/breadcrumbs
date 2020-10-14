@@ -118,9 +118,9 @@ vector<vector<float>> accumulateLayers(vector<vector<vector<float>>> layers)
     vector<vector<float>> accumulatedLayers(layers[0].size(), vector<float>(layers[0][0].size(), 0));
     for (const auto & layer : layers)
     {
-        for (size_t y = 0; y < layer[0].size(); ++y)
+        for (size_t y = 0; y < layer.size(); ++y)
         {
-            for (size_t x = 0; x < layer.size(); ++x)
+            for (size_t x = 0; x < layer[0].size(); ++x)
             {
                 accumulatedLayers[y][x] += layer[y][x];
             }
