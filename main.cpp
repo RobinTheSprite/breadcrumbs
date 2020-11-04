@@ -171,7 +171,9 @@ int main(int argc, char * argv [])
     }
 
     auto layersJson = root["layers"];
-    auto layers = (layersJson.empty()) ? vector<vector<vector<float>>>(1, matrix) : getLayers(layersJson);
+    auto layers = (layersJson.empty()) ?
+            vector<vector<vector<float>>>(1, vector<vector<float>>(matrix.size(), vector<float>(matrix[0].size(), 0))) :
+                    getLayers(layersJson);
     auto accumulatedLayer = accumulateLayers(layers);
 
     auto weightsJson = root["weights"];
