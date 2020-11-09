@@ -56,7 +56,7 @@ double scaledDifference(const vector<vector<float>> & matrix, const MatrixPoint&
     return std::abs(matrix[b.y][b.x] - matrix[a.y][a.x]) * scaleFactor;
 }
 
-double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, const vector<vector<float>> & matrix, int base)
+double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, const vector<vector<float>> & matrix, int base, double unitsPerPixel)
 {
     long x = currentPoint.x;
     long y = currentPoint.y;
@@ -66,12 +66,12 @@ double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, 
 
     double sumOfHeights = 0;
 
-    const unsigned int maxDistance = 1;
+    const unsigned int maxDistance = 10;
     for (auto i = 0u; i < maxDistance; ++i)
     {
         if (inBounds(matrix, {x + xDiff, y + yDiff}) && inBounds(matrix, {x, y}))
         {
-            sumOfHeights += std::abs(matrix[y + yDiff][x + xDiff] - matrix[y][x]);
+            sumOfHeights += scaledDifference(matrix, {x, y}, {x + xDiff, y + yDiff}, unitsPerPixel);
         }
 
         x += xDiff;
@@ -152,7 +152,7 @@ vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix,
                                 weights.movementCostZ
                             )
                           + currentPoint.movementCost
-                          + gradeCost(currentPoint, successor, terrainMatrix, weights.gradeCost)
+                          + gradeCost(currentPoint, successor, terrainMatrix, weights.gradeCost, weights.unitsPerPixel)
                           + costMatrix[successor.y][successor.x]
                     );
 
