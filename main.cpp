@@ -142,6 +142,21 @@ Weights getWeights(const nlohmann::json &json)
     };
 }
 
+vector<vector<float>> getCostMatrix(const Matrix &elevationMatrix, const nlohmann::json &layersJson)
+{
+    std::vector<Matrix> layers;
+    if (layersJson.empty())
+    {
+        layers = std::vector<std::vector<vector<float>>>(1, std::vector<vector<float>>(elevationMatrix.size(), vector<float>(elevationMatrix[0].size(), 0)));
+    }
+    else
+    {
+        layers = getLayers(layersJson);
+    }
+
+    return accumulateLayers(layers);
+}
+
 int main(int argc, char * argv [])
 {
     if (argc < 2)
@@ -182,18 +197,7 @@ int main(int argc, char * argv [])
         points.push_back(m);
     }
 
-    auto layersJson = root["layers"];
-    vector<Matrix> layers;
-    if (layersJson.empty())
-    {
-        layers = vector<vector<vector<float>>>(1, vector<vector<float>>(elevationMatrix.size(), vector<float>(elevationMatrix[0].size(), 0)));
-    }
-    else
-    {
-        layers = getLayers(layersJson);
-    }
-
-    auto costMatrix = accumulateLayers(layers);
+    vector<vector<float>> costMatrix = getCostMatrix(elevationMatrix, root["layers"]);
 
     if (argc == 3)
     {
@@ -206,7 +210,7 @@ int main(int argc, char * argv [])
     {
         auto weights = getWeights(root["weights"]);
 
-        auto pathMatrix = getShortestPath(elevationMatrix, costMatrix, points, weights); //{470, 420}, {200, 230}
+        auto pathMatrix = getShortestPath(elevationMatrix, costMatrix, points, weights);
 
         writePathToTIFF(pathMatrix, "path.tif");
     }
