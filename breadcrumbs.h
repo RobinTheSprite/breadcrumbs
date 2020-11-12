@@ -19,7 +19,7 @@ struct MatrixPoint
 };
 struct Weights
 {
-    int unitsPerPixel;
+    double unitsPerPixel;
     int gradeCost;
     double movementCostXY;
     double movementCostZ;
@@ -27,9 +27,11 @@ struct Weights
     double heuristicZ;
 };
 
-std::vector<std::vector<int>> getShortestPath(const std::vector<std::vector<float>> & terrainMatrix,
-                                              const std::vector<std::vector<float>> & costMatrix,
-                                              std::deque<MatrixPoint> controlPoints,
+using Matrix = std::vector<std::vector<float>>;
+
+std::vector<std::vector<int>> getShortestPath(const Matrix & terrainMatrix,
+                                              const Matrix & costMatrix,
+                                              std::deque<MatrixPoint> &controlPoints,
                                               const Weights &weights);
 
 #endif //BREADCRUMBS_BREADCRUMBS_H

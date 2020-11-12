@@ -18,7 +18,7 @@ using std::deque;
 int runTestSuite(char *const *argv,
                  const vector<std::vector<float>> &matrix,
                  const vector<std::vector<float>> &costMatrix,
-                 const deque<MatrixPoint> &points,
+                 deque<MatrixPoint> &points,
                  nlohmann::json weightsJson)
 {
     string dequeString;
@@ -57,7 +57,7 @@ int runTestSuite(char *const *argv,
                     for (int heuristicZ = 0; heuristicZ <= 10; heuristicZ += 5)
                     {
                         Weights weights = {
-                                weightsJson["unitsPerPixel"].get<int>(),
+                                weightsJson["unitsPerPixel"].get<double>(),
                                 gradeCost,
                                 static_cast<double>(movementCostXY),
                                 static_cast<double>(movementCostZ),
@@ -187,12 +187,14 @@ int main(int argc, char * argv [])
     }
     else
     {
-        Weights weights = {weightsJson["unitsPerPixel"].get<int>(),
-                           weightsJson["gradeCost"].get<int>(),
-                           weightsJson["movementCost"]["xy"].get<double>(),
-                           weightsJson["movementCost"]["z"].get<double>(),
-                           weightsJson["heuristic"]["xy"].get<double>(),
-                           weightsJson["heuristic"]["z"].get<double>()};
+        Weights weights = {
+            weightsJson["unitsPerPixel"].get<double>(),
+            weightsJson["gradeCost"].get<int>(),
+            weightsJson["movementCost"]["xy"].get<double>(),
+            weightsJson["movementCost"]["z"].get<double>(),
+            weightsJson["heuristic"]["xy"].get<double>(),
+            weightsJson["heuristic"]["z"].get<double>()
+       };
 
         auto pathMatrix = getShortestPath(matrix, accumulatedLayer, points, weights); //{470, 420}, {200, 230}
 

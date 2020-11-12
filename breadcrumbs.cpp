@@ -16,12 +16,12 @@ using std::make_unique;
 using std::shared_ptr;
 using std::priority_queue;
 
-bool inBounds(const vector<vector<float>>& matrix, const MatrixPoint& p)
+bool inBounds(const Matrix &matrix, const MatrixPoint &p)
 {
     return (p.x > -1 && p.y > -1) && p.y < matrix.size() && p.x < matrix[0].size();
 }
 
-void getSurroundingPoints(const vector<vector<float>>& matrix, const MatrixPoint& currentPoint, vector<MatrixPoint> & surroundingPoints)
+void getSurroundingPoints(const Matrix &matrix, const MatrixPoint &currentPoint, vector<MatrixPoint> &surroundingPoints)
 {
     auto stepSize = 1;
 
@@ -50,13 +50,13 @@ double distance(const MatrixPoint &a, const MatrixPoint &b, double height = 0, d
     return std::sqrt(xScaled*xScaled + yScaled*yScaled + zScaled*zScaled);
 }
 
-double scaledDifference(const vector<vector<float>> & matrix, const MatrixPoint& a, const MatrixPoint& b, double unitsPerPixel)
+double scaledDifference(const Matrix &matrix, const MatrixPoint &a, const MatrixPoint &b, const double &unitsPerPixel)
 {
     double scaleFactor = 1 / unitsPerPixel;
     return std::abs(matrix[b.y][b.x] - matrix[a.y][a.x]) * scaleFactor;
 }
 
-double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, const vector<vector<float>> &matrix, const Weights &weights)
+double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, const Matrix &matrix, const Weights &weights)
 {
     long x = currentPoint.x;
     long y = currentPoint.y;
@@ -82,9 +82,9 @@ double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, 
 
 //controlPoints needs to be a deque because the algorithm needs to pop things off the front quickly but also have
 //random access. std::queue does not have random access.
-vector<vector<int>> getShortestPath(const vector<vector<float>> &terrainMatrix,
-                                    const vector<vector<float>> &costMatrix,
-                                    deque<MatrixPoint> controlPoints,
+vector<vector<int>> getShortestPath(const Matrix &terrainMatrix,
+                                    const Matrix &costMatrix,
+                                    deque<MatrixPoint> &controlPoints,
                                     const Weights &weights)
 {
     auto finalMatrix = vector<vector<int>>(terrainMatrix.size(), vector<int>(terrainMatrix[0].size(), 0));
