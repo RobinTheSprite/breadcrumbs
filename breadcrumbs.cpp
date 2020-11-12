@@ -50,7 +50,7 @@ double distance(const MatrixPoint &a, const MatrixPoint &b, double height = 0, d
     return std::sqrt(xScaled*xScaled + yScaled*yScaled + zScaled*zScaled);
 }
 
-double scaledDifference(const Matrix &matrix, const MatrixPoint &a, const MatrixPoint &b, const double &unitsPerPixel)
+double scaledHeight(const Matrix &matrix, const MatrixPoint &a, const MatrixPoint &b, const double &unitsPerPixel)
 {
     double scaleFactor = 1 / unitsPerPixel;
     return std::abs(matrix[b.y][b.x] - matrix[a.y][a.x]) * scaleFactor;
@@ -70,7 +70,8 @@ double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, 
     {
         if (inBounds(matrix, {x + xDiff, y + yDiff}) && inBounds(matrix, {x, y}))
         {
-            worstHeight = std::max(worstHeight, scaledDifference(matrix, {x, y}, {x + xDiff, y + yDiff}, weights.unitsPerPixel));
+            worstHeight = std::max(worstHeight,
+                                   scaledHeight(matrix, {x, y}, {x + xDiff, y + yDiff}, weights.unitsPerPixel));
         }
 
         x += xDiff;
@@ -130,11 +131,11 @@ vector<vector<int>> getShortestPath(const Matrix &terrainMatrix,
                 if (pathMatrix[successor.y][successor.x] == 0)
                 {
                     pathMatrix[successor.y][successor.x] = visitedPoint;
-                    double heightToSuccessor = scaledDifference(
-                        terrainMatrix,
-                        currentPoint,
-                        successor,
-                        weights.unitsPerPixel
+                    double heightToSuccessor = scaledHeight(
+                            terrainMatrix,
+                            currentPoint,
+                            successor,
+                            weights.unitsPerPixel
                     );
 
                     successor.movementCost = (
@@ -156,11 +157,11 @@ vector<vector<int>> getShortestPath(const Matrix &terrainMatrix,
                           + costMatrix[successor.y][successor.x]
                     );
 
-                    const double heightToTarget = scaledDifference(
-                        terrainMatrix,
-                        successor,
-                        target,
-                        weights.unitsPerPixel
+                    const double heightToTarget = scaledHeight(
+                            terrainMatrix,
+                            successor,
+                            target,
+                            weights.unitsPerPixel
                     );
                     double distToTarget = distance(
                         successor,
