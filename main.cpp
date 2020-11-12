@@ -191,10 +191,10 @@ int main(int argc, char * argv [])
 
     cout << "Columns: " << elevationMatrix[0].size() << endl;
 
-    nlohmann::json root;
+    nlohmann::json json;
     try
     {
-        root = readJSON("params.json");
+        json = readJSON("params.json");
     }
     catch(std::runtime_error &e)
     {
@@ -202,20 +202,20 @@ int main(int argc, char * argv [])
         return -1;
     }
 
-    auto points = getControlPoints(root["points"]);
+    auto points = getControlPoints(json["points"]);
 
-    auto costMatrix = getCostMatrix(elevationMatrix, root["layers"]);
+    auto costMatrix = getCostMatrix(elevationMatrix, json["layers"]);
 
     if (argc == 3)
     {
         if (!strcmp(argv[2], "-testsuite"))
         {
-            return runTestSuite(argv, elevationMatrix, costMatrix, points, root["weights"]["unitsPerPixel"].get<double>());
+            return runTestSuite(argv, elevationMatrix, costMatrix, points, json["weights"]["unitsPerPixel"].get<double>());
         }
     }
     else
     {
-        auto weights = getWeights(root["weights"]);
+        auto weights = getWeights(json["weights"]);
 
         auto pathMatrix = getShortestPath(elevationMatrix, costMatrix, points, weights);
 
