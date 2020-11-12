@@ -130,6 +130,18 @@ vector<vector<float>> accumulateLayers(vector<vector<vector<float>>> layers)
     return accumulatedLayers;
 }
 
+Weights getWeights(const nlohmann::json &json)
+{
+    return {
+            json["unitsPerPixel"].get<double>(),
+            json["gradeCost"].get<int>(),
+            json["movementCost"]["xy"].get<double>(),
+            json["movementCost"]["z"].get<double>(),
+            json["heuristic"]["xy"].get<double>(),
+            json["heuristic"]["z"].get<double>()
+    };
+}
+
 int main(int argc, char * argv [])
 {
     if (argc < 2)
@@ -183,25 +195,16 @@ int main(int argc, char * argv [])
 
     auto costMatrix = accumulateLayers(layers);
 
-    auto weightsJson = root["weights"];
-
     if (argc == 3)
     {
         if (!strcmp(argv[2], "-testsuite"))
         {
-            return runTestSuite(argv, elevationMatrix, costMatrix, points, weightsJson["unitsPerPixel"].get<double>());
+            return runTestSuite(argv, elevationMatrix, costMatrix, points, root["weights"]["unitsPerPixel"].get<double>());
         }
     }
     else
     {
-        Weights weights = {
-            weightsJson["unitsPerPixel"].get<double>(),
-            weightsJson["gradeCost"].get<int>(),
-            weightsJson["movementCost"]["xy"].get<double>(),
-            weightsJson["movementCost"]["z"].get<double>(),
-            weightsJson["heuristic"]["xy"].get<double>(),
-            weightsJson["heuristic"]["z"].get<double>()
-        };
+        auto weights = getWeights(root["weights"]);
 
         auto pathMatrix = getShortestPath(elevationMatrix, costMatrix, points, weights); //{470, 420}, {200, 230}
 
