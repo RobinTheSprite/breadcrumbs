@@ -97,12 +97,12 @@ vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix,
 
         auto differenceGreater = [](auto a, auto b) { return a.totalCost > b.totalCost; };
         using PointQueue = priority_queue<MatrixPoint, vector<MatrixPoint>, decltype(differenceGreater)>;
-        PointQueue openSet(differenceGreater);
+        PointQueue pointQueue(differenceGreater);
 
         startingPoint.movementCost = 0;
         startingPoint.totalCost = 0;
         startingPoint.parent = nullptr;
-        openSet.push(startingPoint);
+        pointQueue.push(startingPoint);
 
         auto pathMatrix = vector<vector<int>>(terrainMatrix.size(), vector<int>(terrainMatrix[0].size(), 0));
         pathMatrix[startingPoint.y][startingPoint.x] = visitedPoint;
@@ -110,10 +110,10 @@ vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix,
         vector<MatrixPoint> surroundingPoints(8, {0, 0, 0, 0, nullptr});
 
         bool stop = false;
-        while (!stop && !openSet.empty())
+        while (!stop && !pointQueue.empty())
         {
-            auto currentPoint = openSet.top();
-            openSet.pop();
+            auto currentPoint = pointQueue.top();
+            pointQueue.pop();
 
             surroundingPoints.resize(8);
             getSurroundingPoints(terrainMatrix, currentPoint, surroundingPoints);
@@ -158,7 +158,7 @@ vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix,
                     successor.totalCost = successor.movementCost + distToTarget;
 
                     successor.parent = make_unique<MatrixPoint>(currentPoint);
-                    openSet.push(successor);
+                    pointQueue.push(successor);
                 }
             }
         }
