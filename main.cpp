@@ -171,9 +171,16 @@ int main(int argc, char * argv [])
     }
 
     auto layersJson = root["layers"];
-    auto layers = (layersJson.empty()) ?
-            vector<vector<vector<float>>>(1, vector<vector<float>>(matrix.size(), vector<float>(matrix[0].size(), 0))) :
-                    getLayers(layersJson);
+    vector<Matrix> layers;
+    if (layersJson.empty())
+    {
+        layers = vector<vector<vector<float>>>(1, vector<vector<float>>(matrix.size(), vector<float>(matrix[0].size(), 0)));
+    }
+    else
+    {
+        layers = getLayers(layersJson);
+    }
+
     auto accumulatedLayer = accumulateLayers(layers);
 
     auto weightsJson = root["weights"];
@@ -194,7 +201,7 @@ int main(int argc, char * argv [])
             weightsJson["movementCost"]["z"].get<double>(),
             weightsJson["heuristic"]["xy"].get<double>(),
             weightsJson["heuristic"]["z"].get<double>()
-       };
+        };
 
         auto pathMatrix = getShortestPath(matrix, accumulatedLayer, points, weights); //{470, 420}, {200, 230}
 
