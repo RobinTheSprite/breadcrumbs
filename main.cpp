@@ -138,18 +138,18 @@ int main(int argc, char * argv [])
         return -1;
     }
 
-    auto matrix = readTIFF(argv[1]);
+    auto elevationMatrix = readTIFF(argv[1]);
 
-    if (matrix.empty())
+    if (elevationMatrix.empty())
     {
         return -1;
     }
 
     cout << argv[1] << endl;
 
-    cout << "Rows: " << matrix.size() << endl;
+    cout << "Rows: " << elevationMatrix.size() << endl;
 
-    cout << "Columns: " << matrix[0].size() << endl;
+    cout << "Columns: " << elevationMatrix[0].size() << endl;
 
     nlohmann::json root;
     try
@@ -174,14 +174,14 @@ int main(int argc, char * argv [])
     vector<Matrix> layers;
     if (layersJson.empty())
     {
-        layers = vector<vector<vector<float>>>(1, vector<vector<float>>(matrix.size(), vector<float>(matrix[0].size(), 0)));
+        layers = vector<vector<vector<float>>>(1, vector<vector<float>>(elevationMatrix.size(), vector<float>(elevationMatrix[0].size(), 0)));
     }
     else
     {
         layers = getLayers(layersJson);
     }
 
-    auto accumulatedLayer = accumulateLayers(layers);
+    auto costMatrix = accumulateLayers(layers);
 
     auto weightsJson = root["weights"];
 
@@ -189,7 +189,7 @@ int main(int argc, char * argv [])
     {
         if (!strcmp(argv[2], "-testsuite"))
         {
-            return runTestSuite(argv, matrix, accumulatedLayer, points, weightsJson["unitsPerPixel"].get<double>());
+            return runTestSuite(argv, elevationMatrix, costMatrix, points, weightsJson["unitsPerPixel"].get<double>());
         }
     }
     else
@@ -203,7 +203,7 @@ int main(int argc, char * argv [])
             weightsJson["heuristic"]["z"].get<double>()
         };
 
-        auto pathMatrix = getShortestPath(matrix, accumulatedLayer, points, weights); //{470, 420}, {200, 230}
+        auto pathMatrix = getShortestPath(elevationMatrix, costMatrix, points, weights); //{470, 420}, {200, 230}
 
         writePathToTIFF(pathMatrix, "path.tif");
     }

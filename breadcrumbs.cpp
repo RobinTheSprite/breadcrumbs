@@ -83,12 +83,12 @@ double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, 
 
 //controlPoints needs to be a deque because the algorithm needs to pop things off the front quickly but also have
 //random access. std::queue does not have random access.
-vector<vector<int>> getShortestPath(const Matrix &terrainMatrix,
+vector<vector<int>> getShortestPath(const Matrix &elevationMatrix,
                                     const Matrix &costMatrix,
                                     deque<MatrixPoint> &controlPoints,
                                     const Weights &weights)
 {
-    auto finalMatrix = vector<vector<int>>(terrainMatrix.size(), vector<int>(terrainMatrix[0].size(), 0));
+    auto finalMatrix = vector<vector<int>>(elevationMatrix.size(), vector<int>(elevationMatrix[0].size(), 0));
     auto visitedPoint = 100;
     shared_ptr<MatrixPoint> finishingPoint;
     while (controlPoints.size() >= 2)
@@ -105,7 +105,7 @@ vector<vector<int>> getShortestPath(const Matrix &terrainMatrix,
         startingPoint.parent = nullptr;
         pointQueue.push(startingPoint);
 
-        auto pathMatrix = vector<vector<int>>(terrainMatrix.size(), vector<int>(terrainMatrix[0].size(), 0));
+        auto pathMatrix = vector<vector<int>>(elevationMatrix.size(), vector<int>(elevationMatrix[0].size(), 0));
         pathMatrix[startingPoint.y][startingPoint.x] = visitedPoint;
 
         vector<MatrixPoint> surroundingPoints(8, {0, 0, 0, 0, nullptr});
@@ -117,7 +117,7 @@ vector<vector<int>> getShortestPath(const Matrix &terrainMatrix,
             pointQueue.pop();
 
             surroundingPoints.resize(8);
-            getSurroundingPoints(terrainMatrix, currentPoint, surroundingPoints);
+            getSurroundingPoints(elevationMatrix, currentPoint, surroundingPoints);
 
             for (auto &successor : surroundingPoints)
             {
@@ -132,7 +132,7 @@ vector<vector<int>> getShortestPath(const Matrix &terrainMatrix,
                 {
                     pathMatrix[successor.y][successor.x] = visitedPoint;
                     double heightToSuccessor = scaledHeight(
-                            terrainMatrix,
+                            elevationMatrix,
                             currentPoint,
                             successor,
                             weights.unitsPerPixel
@@ -148,17 +148,17 @@ vector<vector<int>> getShortestPath(const Matrix &terrainMatrix,
                                 weights.movementCostZ
                             )
                           + gradeCost(
-                                currentPoint,
-                                successor,
-                                terrainMatrix,
-                                weights
+                                    currentPoint,
+                                    successor,
+                                    elevationMatrix,
+                                    weights
                             )
                           + currentPoint.movementCost
                           + costMatrix[successor.y][successor.x]
                     );
 
                     const double heightToTarget = scaledHeight(
-                            terrainMatrix,
+                            elevationMatrix,
                             successor,
                             target,
                             weights.unitsPerPixel
