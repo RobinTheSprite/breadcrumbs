@@ -12,7 +12,7 @@ using std::string;
 using std::cout;
 using std::endl;
 
-vector<vector<float>> getMatrix(const string & filename)
+vector<vector<float>> readTIFF(const string &filename)
 {
     TIFFSetWarningHandler(nullptr);
     TIFF * tiff = TIFFOpen(filename.data(), "r");

@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 
-std::vector<std::vector<float>> getMatrix(const std::string & filename);
+std::vector<std::vector<float>> readTIFF(const std::string & filename);
 
 void writeMatrixToTIFF(std::vector<std::vector<float>> matrix, const std::string & filename);
 

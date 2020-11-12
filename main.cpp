@@ -97,7 +97,7 @@ vector<vector<vector<float>>> getLayers(const nlohmann::json& layersJson)
     std::vector<std::vector<vector<float>>> layers = std::vector<std::vector<vector<float>>>();
     for (const auto & layerInfo : layersJson)
     {
-        auto layer = getMatrix(layerInfo["filename"]);
+        auto layer = readTIFF(layerInfo["filename"]);
         float layerWeight = layerInfo["weight"];
         for (auto & row : layer)
         {
@@ -138,7 +138,7 @@ int main(int argc, char * argv [])
         return -1;
     }
 
-    auto matrix = getMatrix(argv[1]);
+    auto matrix = readTIFF(argv[1]);
 
     if (matrix.empty())
     {
