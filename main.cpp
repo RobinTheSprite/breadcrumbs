@@ -157,6 +157,18 @@ vector<vector<float>> getCostMatrix(const Matrix &elevationMatrix, const nlohman
     return accumulateLayers(layers);
 }
 
+deque<MatrixPoint> getControlPoints(const nlohmann::json &json)
+{
+    deque<MatrixPoint> points;
+    for (const auto & point : json)
+    {
+        MatrixPoint m = {point["x"].get<int>(), point["y"].get<int>()};
+        points.push_back(m);
+    }
+
+    return points;
+}
+
 int main(int argc, char * argv [])
 {
     if (argc < 2)
@@ -190,14 +202,9 @@ int main(int argc, char * argv [])
     }
 
     //load deque with points to run the algorithm between
-    deque<MatrixPoint> points;
-    for (int i = 0; i < root["points"].size(); ++i)
-    {
-        MatrixPoint m = {root["points"][i]["x"].get<int>(), root["points"][i]["y"].get<int>()};
-        points.push_back(m);
-    }
+    auto points = getControlPoints(root["points"]);
 
-    vector<vector<float>> costMatrix = getCostMatrix(elevationMatrix, root["layers"]);
+    auto costMatrix = getCostMatrix(elevationMatrix, root["layers"]);
 
     if (argc == 3)
     {
