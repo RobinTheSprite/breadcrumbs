@@ -32,7 +32,11 @@ void getSurroundingPoints(const Matrix &matrix, const MatrixPoint &currentPoint,
         {
             if(!(x == currentPoint.x && y == currentPoint.y) && inBounds(matrix, {x, y}))
             {
-                surroundingPoints[writeIndex] = {x, y, 0, 0, make_shared<MatrixPoint>(currentPoint)};
+                surroundingPoints[writeIndex].x = x;
+                surroundingPoints[writeIndex].y = y;
+                surroundingPoints[writeIndex].movementCost = 0;
+                surroundingPoints[writeIndex].totalCost = 0;
+                surroundingPoints[writeIndex].parent = make_shared<MatrixPoint>(currentPoint);
                 ++writeIndex;
             }
         }
