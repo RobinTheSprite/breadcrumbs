@@ -65,8 +65,8 @@ double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, 
 
     double worstHeight = 0;
 
-    const unsigned int maxDistance = 4;
-    for (auto i = 0u; i < maxDistance; ++i)
+    const unsigned int radius = 4;
+    for (auto i = 0u; i < radius; ++i)
     {
         if (inBounds(matrix, {x + xDiff, y + yDiff}) && inBounds(matrix, {x, y}))
         {
