@@ -181,6 +181,7 @@ int main(int argc, char * argv [])
 
     if (elevationMatrix.empty())
     {
+        cout << "Failed to read TIFF " << argv[1] << endl;
         return -1;
     }
 
@@ -201,7 +202,6 @@ int main(int argc, char * argv [])
         return -1;
     }
 
-    //load deque with points to run the algorithm between
     auto points = getControlPoints(root["points"]);
 
     auto costMatrix = getCostMatrix(elevationMatrix, root["layers"]);
