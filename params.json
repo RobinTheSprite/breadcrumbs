@@ -9,6 +9,12 @@
       "y": 0
     }
   ],
+  "layers": [
+    {
+      "filename": "",
+      "weight": 0
+    }
+  ],
   "weights": {
     "unitsPerPixel": 1,
     "gradeCost": 1,
