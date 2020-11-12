@@ -41,7 +41,7 @@ void getSurroundingPoints(const vector<vector<float>>& matrix, const MatrixPoint
     surroundingPoints.resize(writeIndex);
 }
 
-double distance(const MatrixPoint &a, const MatrixPoint &b, double height, double xScale, double yScale, double zScale)
+double distance(const MatrixPoint &a, const MatrixPoint &b, double height = 0, double xScale = 1, double yScale = 1, double zScale = 1)
 {
     auto xScaled = (double)(b.x - a.x) * xScale;
     auto yScaled = (double)(b.y - a.y) * yScale;
@@ -77,7 +77,7 @@ double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, 
         y += yDiff;
     }
 
-    return std::pow(base, worstHeight / distance(currentPoint, successor, 0, 1, 1, 1));
+    return std::pow(base, worstHeight / distance(currentPoint, successor));
 }
 
 //controlPoints needs to be a deque because the algorithm needs to pop things off the front quickly but also have
