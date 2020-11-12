@@ -30,6 +30,6 @@ struct Weights
 std::vector<std::vector<int>> getShortestPath(const std::vector<std::vector<float>> & terrainMatrix,
                                               const std::vector<std::vector<float>> & costMatrix,
                                               std::deque<MatrixPoint> controlPoints,
-                                              Weights weights);
+                                              const Weights &weights);
 
 #endif //BREADCRUMBS_BREADCRUMBS_H

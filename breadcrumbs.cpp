@@ -56,7 +56,7 @@ double scaledDifference(const vector<vector<float>> & matrix, const MatrixPoint&
     return std::abs(matrix[b.y][b.x] - matrix[a.y][a.x]) * scaleFactor;
 }
 
-double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, const vector<vector<float>> & matrix, int base, double unitsPerPixel)
+double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, const vector<vector<float>> &matrix, const Weights &weights)
 {
     long x = currentPoint.x;
     long y = currentPoint.y;
@@ -70,22 +70,22 @@ double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, 
     {
         if (inBounds(matrix, {x + xDiff, y + yDiff}) && inBounds(matrix, {x, y}))
         {
-            worstHeight = std::max(worstHeight, scaledDifference(matrix, {x, y}, {x + xDiff, y + yDiff}, unitsPerPixel));
+            worstHeight = std::max(worstHeight, scaledDifference(matrix, {x, y}, {x + xDiff, y + yDiff}, weights.unitsPerPixel));
         }
 
         x += xDiff;
         y += yDiff;
     }
 
-    return std::pow(base, worstHeight / distance(currentPoint, successor));
+    return std::pow(weights.gradeCost, worstHeight / distance(currentPoint, successor));
 }
 
 //controlPoints needs to be a deque because the algorithm needs to pop things off the front quickly but also have
 //random access. std::queue does not have random access.
-vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix,
-                                    const vector<vector<float>> & costMatrix,
+vector<vector<int>> getShortestPath(const vector<vector<float>> &terrainMatrix,
+                                    const vector<vector<float>> &costMatrix,
                                     deque<MatrixPoint> controlPoints,
-                                    Weights weights)
+                                    const Weights &weights)
 {
     auto finalMatrix = vector<vector<int>>(terrainMatrix.size(), vector<int>(terrainMatrix[0].size(), 0));
     auto visitedPoint = 100;
@@ -146,14 +146,30 @@ vector<vector<int>> getShortestPath(const vector<vector<float>> & terrainMatrix,
                                 weights.movementCostXY,
                                 weights.movementCostZ
                             )
+                          + gradeCost(
+                                currentPoint,
+                                successor,
+                                terrainMatrix,
+                                weights
+                            )
                           + currentPoint.movementCost
-                          + gradeCost(currentPoint, successor, terrainMatrix, weights.gradeCost, weights.unitsPerPixel)
                           + costMatrix[successor.y][successor.x]
                     );
 
-                    double heightToTarget = scaledDifference(terrainMatrix, successor, target, weights.unitsPerPixel);
-                    double distToTarget = distance(successor, target, heightToTarget,
-                            weights.heuristicXY, weights.heuristicXY, weights.heuristicZ);
+                    const double heightToTarget = scaledDifference(
+                        terrainMatrix,
+                        successor,
+                        target,
+                        weights.unitsPerPixel
+                    );
+                    double distToTarget = distance(
+                        successor,
+                        target,
+                        heightToTarget,
+                        weights.heuristicXY,
+                        weights.heuristicXY,
+                        weights.heuristicZ
+                    );
 
                     successor.totalCost = successor.movementCost + distToTarget;
 
