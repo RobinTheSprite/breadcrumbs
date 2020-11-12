@@ -19,7 +19,7 @@ int runTestSuite(char *const *argv,
                  const vector<std::vector<float>> &matrix,
                  const vector<std::vector<float>> &costMatrix,
                  deque<MatrixPoint> &points,
-                 nlohmann::json weightsJson)
+                 const double &unitsPerPixel)
 {
     string dequeString;
     for (const auto &point : points)
@@ -57,7 +57,7 @@ int runTestSuite(char *const *argv,
                     for (int heuristicZ = 0; heuristicZ <= 10; heuristicZ += 5)
                     {
                         Weights weights = {
-                                weightsJson["unitsPerPixel"].get<double>(),
+                                unitsPerPixel,
                                 gradeCost,
                                 static_cast<double>(movementCostXY),
                                 static_cast<double>(movementCostZ),
@@ -189,7 +189,7 @@ int main(int argc, char * argv [])
     {
         if (!strcmp(argv[2], "-testsuite"))
         {
-            return runTestSuite(argv, matrix, accumulatedLayer, points, weightsJson);
+            return runTestSuite(argv, matrix, accumulatedLayer, points, weightsJson["unitsPerPixel"].get<double>());
         }
     }
     else
