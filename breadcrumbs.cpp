@@ -63,26 +63,21 @@ double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, 
     const long xDiff = successor.x - currentPoint.x;
     const long yDiff = successor.y - currentPoint.y;
 
+    double worstHeight = 0;
 
-    double sumOfHeights = 0;
-
-    const unsigned int maxDistance = 10;
+    const unsigned int maxDistance = 4;
     for (auto i = 0u; i < maxDistance; ++i)
     {
         if (inBounds(matrix, {x + xDiff, y + yDiff}) && inBounds(matrix, {x, y}))
         {
-            sumOfHeights += scaledDifference(matrix, {x, y}, {x + xDiff, y + yDiff}, unitsPerPixel);
+            worstHeight = std::max(worstHeight, scaledDifference(matrix, {x, y}, {x + xDiff, y + yDiff}, unitsPerPixel));
         }
 
         x += xDiff;
         y += yDiff;
     }
 
-    MatrixPoint maxDistancePoint(currentPoint);
-    maxDistancePoint.x += xDiff*maxDistance;
-    maxDistancePoint.y += yDiff*maxDistance;
-
-    return std::pow(base, sumOfHeights / (distance(currentPoint, maxDistancePoint, 0, 1, 1, 1) * maxDistance));
+    return std::pow(base, worstHeight / distance(currentPoint, successor, 0, 1, 1, 1));
 }
 
 //controlPoints needs to be a deque because the algorithm needs to pop things off the front quickly but also have
