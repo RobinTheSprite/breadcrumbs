@@ -80,7 +80,7 @@ int runTestSuite(char *const *argv,
     return 0;
 }
 
-nlohmann::json readJSON(string filename)
+nlohmann::json readJSON(const string& filename)
 {
     nlohmann::json root;
     ifstream jsonFile(filename);
