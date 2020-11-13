@@ -7,6 +7,7 @@
 #include <cmath>
 #include <queue>
 #include <deque>
+#include <utility>
 #include "breadcrumbs.h"
 
 using std::vector;
@@ -36,7 +37,6 @@ void getSurroundingPoints(const Matrix &matrix, const MatrixPoint &currentPoint,
                 surroundingPoints[writeIndex].y = y;
                 surroundingPoints[writeIndex].movementCost = 0;
                 surroundingPoints[writeIndex].totalCost = 0;
-                surroundingPoints[writeIndex].parent = make_shared<MatrixPoint>(currentPoint);
                 ++writeIndex;
             }
         }
@@ -94,7 +94,7 @@ vector<vector<int>> getShortestPath(const Matrix &elevationMatrix,
 {
     auto finalMatrix = vector<vector<int>>(elevationMatrix.size(), vector<int>(elevationMatrix[0].size(), 0));
     auto visitedPoint = 100;
-    shared_ptr<MatrixPoint> finishingPoint;
+    MatrixPoint finishingPoint;
     while (controlPoints.size() >= 2)
     {
         MatrixPoint startingPoint = controlPoints[0];
@@ -104,15 +104,13 @@ vector<vector<int>> getShortestPath(const Matrix &elevationMatrix,
         using PointQueue = priority_queue<MatrixPoint, vector<MatrixPoint>, decltype(differenceGreater)>;
         PointQueue pointQueue(differenceGreater);
 
-        startingPoint.movementCost = 0;
-        startingPoint.totalCost = 0;
-        startingPoint.parent = nullptr;
         pointQueue.push(startingPoint);
 
-        auto pathMatrix = vector<vector<int>>(elevationMatrix.size(), vector<int>(elevationMatrix[0].size(), 0));
-        pathMatrix[startingPoint.y][startingPoint.x] = visitedPoint;
+        auto pathMatrix = vector<vector<MatrixPoint>>(elevationMatrix.size(), vector<MatrixPoint>(elevationMatrix[0].size(), MatrixPoint{}));
+        startingPoint.visited = true;
+        pathMatrix[startingPoint.y][startingPoint.x]= startingPoint;
 
-        vector<MatrixPoint> surroundingPoints(8, {0, 0, 0, 0, nullptr});
+        vector<MatrixPoint> surroundingPoints(8, MatrixPoint{});
 
         bool stop = false;
         while (!stop && !pointQueue.empty())
@@ -125,16 +123,15 @@ vector<vector<int>> getShortestPath(const Matrix &elevationMatrix,
 
             for (auto &successor : surroundingPoints)
             {
-                finishingPoint = make_shared<MatrixPoint>(successor);
-                if (successor.x == target.x && successor.y == target.y)
+                if (currentPoint.x == target.x && currentPoint.y == target.y)
                 {
                     stop = true;
                     break;
                 }
 
-                if (pathMatrix[successor.y][successor.x] == 0)
+                if (!pathMatrix[successor.y][successor.x].visited)
                 {
-                    pathMatrix[successor.y][successor.x] = visitedPoint;
+                    successor.visited =true;
                     double heightToSuccessor = scaledHeight(
                             elevationMatrix,
                             currentPoint,
@@ -178,18 +175,22 @@ vector<vector<int>> getShortestPath(const Matrix &elevationMatrix,
 
                     successor.totalCost = successor.movementCost + distToTarget;
 
-                    successor.parent = make_unique<MatrixPoint>(currentPoint);
+                    successor.parent = {currentPoint.x, currentPoint.y};
                     pointQueue.push(successor);
+                    pathMatrix[successor.y][successor.x] = successor;
+                    finishingPoint = pathMatrix[successor.y][successor.x];
                 }
             }
         }
-        fill(pathMatrix.begin(), pathMatrix.end(), vector<int>(pathMatrix.size(), 0));
+
         controlPoints.pop_front();
-        while(finishingPoint)
+        while(finishingPoint.parent != std::make_pair<long, long>(-1, -1))
         {
-            finalMatrix[finishingPoint->y][finishingPoint->x] = visitedPoint;
-            finishingPoint = finishingPoint->parent;
+            finalMatrix[finishingPoint.y][finishingPoint.x] = visitedPoint;
+            finishingPoint = pathMatrix[finishingPoint.parent.second][finishingPoint.parent.first];
         }
+
+        fill(pathMatrix.begin(), pathMatrix.end(), vector<MatrixPoint>(pathMatrix.size(), MatrixPoint{}));
     }
 
     return finalMatrix;

@@ -11,11 +11,12 @@
 
 struct MatrixPoint
 {
-    long x;
-    long y;
-    double movementCost;
-    double totalCost;
-    std::shared_ptr<MatrixPoint> parent;
+    long x = -1;
+    long y = -1;
+    double movementCost = 0;
+    double totalCost = 0;
+    std::pair<long, long> parent = {-1, -1};
+    bool visited = false;
 };
 struct Weights
 {
