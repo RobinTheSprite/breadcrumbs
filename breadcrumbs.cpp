@@ -117,6 +117,7 @@ vector<vector<int>> getShortestPath(const Matrix &elevationMatrix,
         {
             auto currentPoint = pointQueue.top();
             pointQueue.pop();
+            finishingPoint = currentPoint;
 
             surroundingPoints.resize(8);
             getSurroundingPoints(elevationMatrix, currentPoint, surroundingPoints);
@@ -178,7 +179,6 @@ vector<vector<int>> getShortestPath(const Matrix &elevationMatrix,
                     successor.parent = {currentPoint.x, currentPoint.y};
                     pointQueue.push(successor);
                     pathMatrix[successor.y][successor.x] = successor;
-                    finishingPoint = pathMatrix[successor.y][successor.x];
                 }
             }
         }
