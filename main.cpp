@@ -60,15 +60,16 @@ int runTestSuite(char *const *argv,
     auto heatMap = std::vector<vector<int>>(matrix.size(), vector<int>(matrix[0].size(), 0));
 
     int gradeCosts [] = {0, 10, 100, 1000};
+    int xyzWeights [] = {0, 1, 10, 100};
     for (const auto &gradeCost : gradeCosts)
     {
-        for (int movementCostXY = 0; movementCostXY <= 10; movementCostXY += 5)
+        for (const int &movementCostXY : xyzWeights)
         {
-            for (int movementCostZ = 0; movementCostZ <= 10; movementCostZ += 5)
+            for (const int &movementCostZ : xyzWeights)
             {
-                for (int heuristicXY = 0; heuristicXY <= 10; heuristicXY += 5)
+                for (const int &heuristicXY : xyzWeights)
                 {
-                    for (int heuristicZ = 0; heuristicZ <= 10; heuristicZ += 5)
+                    for (const int &heuristicZ : xyzWeights)
                     {
                         Weights weights = {
                                 unitsPerPixel,
