@@ -15,6 +15,18 @@ using std::string;
 using std::ifstream;
 using std::deque;
 
+template <typename T>
+void addMatrices(vector<vector<T>> &accumulatedLayers, const vector<vector<T>> &layer)
+{
+    for (size_t y = 0; y < layer.size(); ++y)
+    {
+        for (size_t x = 0; x < layer[0].size(); ++x)
+        {
+            accumulatedLayers[y][x] += layer[y][x];
+        }
+    }
+}
+
 int runTestSuite(char *const *argv,
                  const vector<std::vector<float>> &matrix,
                  const vector<std::vector<float>> &costMatrix,
@@ -45,6 +57,8 @@ int runTestSuite(char *const *argv,
                 return -1;
     }
 
+    auto heatMap = std::vector<vector<int>>(matrix.size(), vector<int>(matrix[0].size(), 0));
+
     int gradeCosts [] = {0, 10, 100, 1000};
     for (const auto &gradeCost : gradeCosts)
     {
@@ -68,6 +82,8 @@ int runTestSuite(char *const *argv,
 
                         auto pathMatrix = getShortestPath(matrix, costMatrix, points, weights);
 
+                        addMatrices<int>(heatMap, pathMatrix);
+
                         writePathToTIFF(pathMatrix, filepath +
                             "grade(" + std::to_string(gradeCost) + ")" +
                             "g(xy=" + std::to_string(movementCostXY) + ", z=" + std::to_string(movementCostZ) + ")" +
@@ -77,6 +93,8 @@ int runTestSuite(char *const *argv,
             }
         }
     }
+
+    writePathToTIFF(heatMap, filepath + "heatmap.tif");
 
     return 0;
 }
@@ -119,13 +137,7 @@ vector<vector<float>> accumulateLayers(vector<vector<vector<float>>> layers)
     vector<vector<float>> accumulatedLayers(layers[0].size(), vector<float>(layers[0][0].size(), 0));
     for (const auto & layer : layers)
     {
-        for (size_t y = 0; y < layer.size(); ++y)
-        {
-            for (size_t x = 0; x < layer[0].size(); ++x)
-            {
-                accumulatedLayers[y][x] += layer[y][x];
-            }
-        }
+        addMatrices<float>(accumulatedLayers, layer);
     }
 
     return accumulatedLayers;
