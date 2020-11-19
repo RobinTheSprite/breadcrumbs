@@ -59,6 +59,7 @@ int runTestSuite(char *const *argv,
                         Weights weights = {
                                 unitsPerPixel,
                                 gradeCost,
+                                5,
                                 static_cast<double>(movementCostXY),
                                 static_cast<double>(movementCostZ),
                                 static_cast<double>(heuristicXY),
@@ -134,11 +135,13 @@ Weights getWeights(const nlohmann::json &json)
 {
     return {
             json["unitsPerPixel"].get<double>(),
-            json["gradeCost"].get<int>(),
+            json["grade"]["base"].get<int>(),
+            json["grade"]["radius"].get<int>(),
             json["movementCost"]["xy"].get<double>(),
             json["movementCost"]["z"].get<double>(),
             json["heuristic"]["xy"].get<double>(),
             json["heuristic"]["z"].get<double>()
+
     };
 }
 

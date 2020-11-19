@@ -69,7 +69,7 @@ double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, 
 
     double worstHeight = 0;
 
-    const unsigned int radius = 4;
+    const unsigned int radius = weights.gradeRadius;
     for (auto i = 0u; i < radius; ++i)
     {
         if (inBounds(matrix, {x + xDiff, y + yDiff}) && inBounds(matrix, {x, y}))
@@ -82,7 +82,7 @@ double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, 
         y += yDiff;
     }
 
-    return std::pow(weights.gradeCost, worstHeight / distance(currentPoint, successor));
+    return std::pow(weights.gradeBase, worstHeight / distance(currentPoint, successor));
 }
 
 //controlPoints needs to be a deque because the algorithm needs to pop things off the front quickly but also have

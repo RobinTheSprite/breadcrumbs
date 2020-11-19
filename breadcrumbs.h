@@ -21,7 +21,8 @@ struct MatrixPoint
 struct Weights
 {
     double unitsPerPixel;
-    int gradeCost;
+    int gradeBase;
+    int gradeRadius;
     double movementCostXY;
     double movementCostZ;
     double heuristicXY;
