@@ -33,7 +33,7 @@ using Matrix = std::vector<std::vector<float>>;
 
 std::vector<std::vector<int>> getShortestPath(const Matrix & elevationMatrix,
                                               const Matrix & costMatrix,
-                                              std::deque<MatrixPoint> &controlPoints,
+                                              std::deque<MatrixPoint> controlPoints,
                                               const Weights &weights);
 
 #endif //BREADCRUMBS_BREADCRUMBS_H

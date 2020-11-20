@@ -87,9 +87,10 @@ double gradeCost(const MatrixPoint &currentPoint, const MatrixPoint &successor, 
 
 //controlPoints needs to be a deque because the algorithm needs to pop things off the front quickly but also have
 //random access. std::queue does not have random access.
+//controlPoints must also be passed by value, to allow it to be used multiple times
 vector<vector<int>> getShortestPath(const Matrix &elevationMatrix,
                                     const Matrix &costMatrix,
-                                    deque<MatrixPoint> &controlPoints,
+                                    deque<MatrixPoint> controlPoints,
                                     const Weights &weights)
 {
     auto finalMatrix = vector<vector<int>>(elevationMatrix.size(), vector<int>(elevationMatrix[0].size(), 0));
