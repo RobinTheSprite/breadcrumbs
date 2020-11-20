@@ -94,7 +94,7 @@ vector<vector<int>> getShortestPath(const Matrix &elevationMatrix,
                                     const Weights &weights)
 {
     auto finalMatrix = vector<vector<int>>(elevationMatrix.size(), vector<int>(elevationMatrix[0].size(), 0));
-    auto visitedPoint = 100;
+    auto visitedPoint = 10;
     MatrixPoint finishingPoint;
     while (controlPoints.size() >= 2)
     {
