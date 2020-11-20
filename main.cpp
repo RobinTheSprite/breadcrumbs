@@ -224,7 +224,7 @@ int main(int argc, char * argv [])
 
     if (argc == 3)
     {
-        if (!strcmp(argv[2], "-testsuite"))
+        if (!strcmp(argv[2], "--testsuite"))
         {
             return runTestSuite(argv, elevationMatrix, costMatrix, points, json["weights"]["unitsPerPixel"].get<double>());
         }
