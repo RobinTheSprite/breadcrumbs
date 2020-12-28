@@ -83,7 +83,10 @@ int runTestSuite(char *const *argv,
 
                         auto pathMatrix = getShortestPath(matrix, costMatrix, points, weights);
 
-                        addMatrices<int>(heatMap, pathMatrix);
+                        if (!strcmp(argv[3], "--heatmap"))
+                        {
+                            addMatrices<int>(heatMap, pathMatrix);
+                        }
 
                         writePathToTIFF(pathMatrix, filepath +
                             "grade(" + std::to_string(gradeCost) + ")" +
@@ -95,7 +98,10 @@ int runTestSuite(char *const *argv,
         }
     }
 
-    writePathToTIFF(heatMap, filepath + "heatmap.tif");
+    if (!strcmp(argv[3], "--heatmap"))
+    {
+        writePathToTIFF(heatMap, filepath + "heatmap.tif");
+    }
 
     return 0;
 }
