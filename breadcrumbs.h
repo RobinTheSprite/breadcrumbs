@@ -9,6 +9,10 @@
 #include <deque>
 #include <memory>
 
+/*
+ * Stores all the information necessary to complete
+ * a run of the algorithm.
+ */
 struct MatrixPoint
 {
     long x = -1;
@@ -18,6 +22,10 @@ struct MatrixPoint
     std::pair<long, long> parent = {-1, -1};
     bool visited = false;
 };
+
+/*
+ * All of the weights given in params.json
+ */
 struct Weights
 {
     double unitsPerPixel;
@@ -29,8 +37,14 @@ struct Weights
     double heuristicZ;
 };
 
+// A 2D matrix of floats
 using Matrix = std::vector<std::vector<float>>;
 
+/*
+ * Using a set of weights, a set of points to pass through, a matrix of elevation
+ * data, and a matrix of extra accumulated weighted data layers, computes the shortest
+ * path between each consecutive point.
+ */
 std::vector<std::vector<int>> getShortestPath(const Matrix & elevationMatrix,
                                               const Matrix & costMatrix,
                                               std::deque<MatrixPoint> controlPoints,
