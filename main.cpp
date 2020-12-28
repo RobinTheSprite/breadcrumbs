@@ -1,3 +1,10 @@
+/*
+ * main.cpp
+ * Mark Underwood
+ * www.github.com/RobinTheSprite
+ * Parses input and runs the algorithm
+ */
+
 #include <iostream>
 #include <string>
 #include <sys/stat.h>
@@ -15,6 +22,8 @@ using std::string;
 using std::ifstream;
 using std::deque;
 
+// Adds each cell of a 2D matrix to an identically sized matrix.
+// The second parameter is added to the first parameter.
 template <typename T>
 void addMatrices(vector<vector<T>> &accumulatedLayers, const vector<vector<T>> &layer)
 {
@@ -27,6 +36,14 @@ void addMatrices(vector<vector<T>> &accumulatedLayers, const vector<vector<T>> &
     }
 }
 
+/*
+ * Systematically runs the algorithm on a combination of parameter settings.
+ * Each run is individually written to a TIFF with the parameter settings
+ * encoded into the filename.
+ * The results of the test suite are written to a folder named after the points
+ * that were traversed.
+ * Optionally, generate a heatmap of every run and output to a single TIFF.
+ */
 int runTestSuite(char *const *argv,
                  const vector<std::vector<float>> &matrix,
                  const vector<std::vector<float>> &costMatrix,
@@ -106,6 +123,9 @@ int runTestSuite(char *const *argv,
     return 0;
 }
 
+/*
+ * Reads a JSON file with the given name into a JSON object.
+ */
 nlohmann::json readJSON(const string& filename)
 {
     nlohmann::json root;
@@ -118,6 +138,9 @@ nlohmann::json readJSON(const string& filename)
     return root;
 }
 
+/*
+ * Reads, and weights, the extra cost layers specified in params.json.
+ */
 vector<vector<vector<float>>> getLayers(const nlohmann::json& layersJson)
 {
     std::vector<std::vector<vector<float>>> layers = std::vector<std::vector<vector<float>>>();
@@ -139,6 +162,9 @@ vector<vector<vector<float>>> getLayers(const nlohmann::json& layersJson)
     return layers;
 }
 
+/*
+ * Adds all cost layers, except the elevation data, into a single matrix.
+ */
 vector<vector<float>> accumulateLayers(vector<vector<vector<float>>> layers)
 {
     vector<vector<float>> accumulatedLayers(layers[0].size(), vector<float>(layers[0][0].size(), 0));
@@ -150,6 +176,9 @@ vector<vector<float>> accumulateLayers(vector<vector<vector<float>>> layers)
     return accumulatedLayers;
 }
 
+/*
+ * Read the weights out of the JSON object and into a Weights object.
+ */
 Weights getWeights(const nlohmann::json &json)
 {
     return {
@@ -164,6 +193,10 @@ Weights getWeights(const nlohmann::json &json)
     };
 }
 
+/*
+ * Calls all necessary functions to create an accumulated cost matrix for all cost layers
+ * given in params.json
+ */
 vector<vector<float>> getCostMatrix(const Matrix &elevationMatrix, const nlohmann::json &layersJson)
 {
     std::vector<Matrix> layers;
@@ -179,6 +212,11 @@ vector<vector<float>> getCostMatrix(const Matrix &elevationMatrix, const nlohman
     return accumulateLayers(layers);
 }
 
+/*
+ * Reads the points which the algorithm must pass through from
+ * the JSON object.
+ * Returns a deque of MatrixPoints.
+ */
 deque<MatrixPoint> getControlPoints(const nlohmann::json &json)
 {
     deque<MatrixPoint> points;
