@@ -44,36 +44,13 @@ void addMatrices(vector<vector<T>> &accumulatedLayers, const vector<vector<T>> &
  * that were traversed.
  * Optionally, generate a heatmap of every run and output to a single TIFF.
  */
-int runTestSuite(char *const *argv,
+int runTestSuite(const string& filepath,
+                 bool makeHeatMap,
                  const vector<std::vector<float>> &matrix,
                  const vector<std::vector<float>> &costMatrix,
                  deque<MatrixPoint> &points,
                  const double &unitsPerPixel)
 {
-    string dequeString;
-    for (const auto &point : points)
-    {
-        dequeString += "(" + std::to_string(point.x) + ", " + std::to_string(point.y) + ")";
-    }
-
-    cout << "Begin full test suite for " << argv[1] << endl;
-    cout << "at points " << dequeString << endl;
-
-    string filepath = "./data/" + dequeString + "/";
-    int mkdirResult = mkdir("./data/", S_IRWXU);
-    if (mkdirResult != 0 && errno != EEXIST)
-    {
-        cout << "ERROR: Unable to create data directory" << endl;
-                return -1;
-    }
-
-    mkdirResult = mkdir(filepath.data(), S_IRWXU);
-    if (mkdirResult != 0 && errno != EEXIST)
-    {
-        cout << "ERROR: Unable to create directory for test run" << endl;
-                return -1;
-    }
-
     auto heatMap = std::vector<vector<int>>(matrix.size(), vector<int>(matrix[0].size(), 0));
 
     int gradeCosts [] = {0, 10, 100, 1000};
@@ -100,7 +77,7 @@ int runTestSuite(char *const *argv,
 
                         auto pathMatrix = getShortestPath(matrix, costMatrix, points, weights);
 
-                        if (!strcmp(argv[3], "--heatmap"))
+                        if (makeHeatMap)
                         {
                             addMatrices<int>(heatMap, pathMatrix);
                         }
@@ -115,7 +92,7 @@ int runTestSuite(char *const *argv,
         }
     }
 
-    if (!strcmp(argv[3], "--heatmap"))
+    if (makeHeatMap)
     {
         writePathToTIFF(heatMap, filepath + "heatmap.tif");
     }
@@ -266,11 +243,36 @@ int main(int argc, char * argv [])
 
     auto costMatrix = getCostMatrix(elevationMatrix, json["layers"]);
 
-    if (argc == 3)
+    if (argc > 2)
     {
         if (!strcmp(argv[2], "--testsuite"))
         {
-            return runTestSuite(argv, elevationMatrix, costMatrix, points, json["weights"]["unitsPerPixel"].get<double>());
+            string dequeString;
+            for (const auto &point : points)
+            {
+                dequeString += "(" + std::to_string(point.x) + ", " + std::to_string(point.y) + ")";
+            }
+
+            cout << "Begin full test suite for " << argv[1] << endl;
+            cout << "at points " << dequeString << endl;
+
+            string filepath = "./data/" + dequeString + "/";
+            int mkdirResult = mkdir("./data/", S_IRWXU);
+            if (mkdirResult != 0 && errno != EEXIST)
+            {
+                cout << "ERROR: Unable to create data directory" << endl;
+                return -1;
+            }
+
+            mkdirResult = mkdir(filepath.data(), S_IRWXU);
+            if (mkdirResult != 0 && errno != EEXIST)
+            {
+                cout << "ERROR: Unable to create directory for test run" << endl;
+                return -1;
+            }
+
+            bool makeHeatMap = argc > 3 && !strcmp(argv[3], "--heatmap");
+            return runTestSuite(filepath, makeHeatMap, elevationMatrix, costMatrix, points, json["weights"]["unitsPerPixel"].get<double>());
         }
     }
     else
