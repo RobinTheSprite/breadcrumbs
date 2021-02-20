@@ -221,9 +221,9 @@ deque<MatrixPoint> getControlPoints(const nlohmann::json &json)
 
 int main(int argc, char * argv [])
 {
-    if (argc < 2)
+    if (argc < 3)
     {
-        cout << "Specify a TIFF to use" << endl;
+        cout << "Specify a TIFF to use and a parameters file" << endl;
         return -1;
     }
 
@@ -244,7 +244,7 @@ int main(int argc, char * argv [])
     nlohmann::json json;
     try
     {
-        json = readJSON("params.json");
+        json = readJSON(argv[2]);
     }
     catch(std::runtime_error &e)
     {
@@ -256,11 +256,11 @@ int main(int argc, char * argv [])
 
     auto costMatrix = getCostMatrix(elevationMatrix, json["layers"]);
 
-    if (argc > 2)
+    if (argc > 3)
     {
         TestSuiteSettings settings;
         settings.unitsPerPixel = json["weights"]["unitsPerPixel"].get<double>();
-        for (int i = 2; i < argc; ++i)
+        for (int i = 3; i < argc; ++i)
         {
             if (strcmp(argv[i], "--testsuite") == 0)
             {
