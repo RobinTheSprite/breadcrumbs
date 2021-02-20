@@ -256,7 +256,7 @@ int main(int argc, char * argv [])
             cout << "Begin full test suite for " << argv[1] << endl;
             cout << "at points " << dequeString << endl;
 
-            string filepath = "./data/" + dequeString + "/";
+            string filepath = "./data/" + string(argv[1]) + dequeString + "/";
             int mkdirResult = mkdir("./data/", S_IRWXU);
             if (mkdirResult != 0 && errno != EEXIST)
             {
