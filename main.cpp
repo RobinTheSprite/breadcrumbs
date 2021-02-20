@@ -259,7 +259,6 @@ int main(int argc, char * argv [])
     if (argc > 2)
     {
         TestSuiteSettings settings;
-        settings.filepath = argv[1];
         settings.unitsPerPixel = json["weights"]["unitsPerPixel"].get<double>();
         for (int i = 2; i < argc; ++i)
         {
@@ -281,7 +280,13 @@ int main(int argc, char * argv [])
         cout << "Begin full test suite for " << argv[1] << endl;
         cout << "at points " << dequeString << endl;
 
-        string filepath = "./data/" + string(argv[1]) + dequeString + "/";
+        string filename = argv[1];
+        auto const posOfSlash = filename.find_last_of('/');
+        auto const posOfDot = filename.find_last_of('.');
+        filename = filename.substr(posOfSlash + 1, posOfDot - posOfSlash - 1);
+
+        string filepath = "./data/" + filename + dequeString + "/";
+        settings.filepath = filepath;
         int mkdirResult = mkdir("./data/", S_IRWXU);
         if (mkdirResult != 0 && errno != EEXIST)
         {
