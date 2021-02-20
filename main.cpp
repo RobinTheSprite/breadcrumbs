@@ -36,6 +36,16 @@ void addMatrices(vector<vector<T>> &accumulatedLayers, const vector<vector<T>> &
     }
 }
 
+// Stores various settings for the test suite function.
+// Cuts down on needed parameters
+struct TestSuiteSettings
+{
+    string filepath;
+    bool heatmap = false;
+    bool writeImages = false;
+    double unitsPerPixel = 0;
+};
+
 /*
  * Systematically runs the algorithm on a combination of parameter settings.
  * Each run is individually written to a TIFF with the parameter settings
@@ -44,12 +54,8 @@ void addMatrices(vector<vector<T>> &accumulatedLayers, const vector<vector<T>> &
  * that were traversed.
  * Optionally, generate a heatmap of every run and output to a single TIFF.
  */
-int runTestSuite(const string& filepath,
-                 bool makeHeatMap,
-                 const vector<std::vector<float>> &matrix,
-                 const vector<std::vector<float>> &costMatrix,
-                 deque<MatrixPoint> &points,
-                 const double &unitsPerPixel)
+int runTestSuite(const vector<std::vector<float>> &matrix, const vector<std::vector<float>> &costMatrix,
+                 deque<MatrixPoint> &points, const TestSuiteSettings &settings)
 {
     auto heatMap = std::vector<vector<int>>(matrix.size(), vector<int>(matrix[0].size(), 0));
 
@@ -66,7 +72,7 @@ int runTestSuite(const string& filepath,
                     for (const int &heuristicZ : xyzWeights)
                     {
                         Weights weights = {
-                                unitsPerPixel,
+                                settings.unitsPerPixel,
                                 gradeCost,
                                 5,
                                 static_cast<double>(movementCostXY),
@@ -77,24 +83,31 @@ int runTestSuite(const string& filepath,
 
                         auto pathMatrix = getShortestPath(matrix, costMatrix, points, weights);
 
-                        if (makeHeatMap)
+                        if (settings.heatmap)
                         {
                             addMatrices<int>(heatMap, pathMatrix);
                         }
 
-                        writePathToTIFF(pathMatrix, filepath +
-                            "grade(" + std::to_string(gradeCost) + ")" +
-                            "g(xy=" + std::to_string(movementCostXY) + ", z=" + std::to_string(movementCostZ) + ")" +
-                            "h(xy=" + std::to_string(heuristicXY) + ", z=" + std::to_string(heuristicZ) + ").tif");
+                        if (settings.writeImages)
+                        {
+                            writePathToTIFF
+                            (
+                                pathMatrix,
+                                settings.filepath +
+                                "grade(" + std::to_string(gradeCost) + ")" +
+                                "g(xy=" + std::to_string(movementCostXY) + ", z=" + std::to_string(movementCostZ) + ")" +
+                                "h(xy=" + std::to_string(heuristicXY) + ", z=" + std::to_string(heuristicZ) + ").tif"
+                            );
+                        }
                     }
                 }
             }
         }
     }
 
-    if (makeHeatMap)
+    if (settings.heatmap)
     {
-        writePathToTIFF(heatMap, filepath + "heatmap.tif");
+        writePathToTIFF(heatMap, settings.filepath + "heatmap.tif");
     }
 
     return 0;
@@ -245,35 +258,45 @@ int main(int argc, char * argv [])
 
     if (argc > 2)
     {
-        if (!strcmp(argv[2], "--testsuite"))
+        TestSuiteSettings settings;
+        settings.filepath = argv[1];
+        settings.unitsPerPixel = json["weights"]["unitsPerPixel"].get<double>();
+        for (int i = 2; i <= argc; ++i)
         {
-            string dequeString;
-            for (const auto &point : points)
+            if (strcmp(argv[i], "--testsuite") == 0)
             {
-                dequeString += "(" + std::to_string(point.x) + ", " + std::to_string(point.y) + ")";
-            }
-
-            cout << "Begin full test suite for " << argv[1] << endl;
-            cout << "at points " << dequeString << endl;
-
-            string filepath = "./data/" + string(argv[1]) + dequeString + "/";
-            int mkdirResult = mkdir("./data/", S_IRWXU);
-            if (mkdirResult != 0 && errno != EEXIST)
+                settings.writeImages = true;
+            } else if (strcmp(argv[i], "--heatmap") == 0)
             {
-                cout << "ERROR: Unable to create data directory" << endl;
-                return -1;
+                settings.heatmap = true;
             }
-
-            mkdirResult = mkdir(filepath.data(), S_IRWXU);
-            if (mkdirResult != 0 && errno != EEXIST)
-            {
-                cout << "ERROR: Unable to create directory for test run" << endl;
-                return -1;
-            }
-
-            bool makeHeatMap = argc > 3 && !strcmp(argv[3], "--heatmap");
-            return runTestSuite(filepath, makeHeatMap, elevationMatrix, costMatrix, points, json["weights"]["unitsPerPixel"].get<double>());
         }
+
+        string dequeString;
+        for (const auto &point : points)
+        {
+            dequeString += "(" + std::to_string(point.x) + ", " + std::to_string(point.y) + ")";
+        }
+
+        cout << "Begin full test suite for " << argv[1] << endl;
+        cout << "at points " << dequeString << endl;
+
+        string filepath = "./data/" + string(argv[1]) + dequeString + "/";
+        int mkdirResult = mkdir("./data/", S_IRWXU);
+        if (mkdirResult != 0 && errno != EEXIST)
+        {
+            cout << "ERROR: Unable to create data directory" << endl;
+            return -1;
+        }
+
+        mkdirResult = mkdir(filepath.data(), S_IRWXU);
+        if (mkdirResult != 0 && errno != EEXIST)
+        {
+            cout << "ERROR: Unable to create directory for test run" << endl;
+            return -1;
+        }
+
+        return runTestSuite(elevationMatrix, costMatrix, points, settings);
     }
     else
     {
