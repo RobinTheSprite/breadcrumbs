@@ -261,7 +261,7 @@ int main(int argc, char * argv [])
         TestSuiteSettings settings;
         settings.filepath = argv[1];
         settings.unitsPerPixel = json["weights"]["unitsPerPixel"].get<double>();
-        for (int i = 2; i <= argc; ++i)
+        for (int i = 2; i < argc; ++i)
         {
             if (strcmp(argv[i], "--testsuite") == 0)
             {
