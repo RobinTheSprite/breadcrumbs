@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <title>Breadcrumbs</title>
+  </head>
+  <body>
+    <h1>Breadcrumbs</h1>
+    <form>
+        <label for="points">Points</label>
+        <fieldset name="points">
+            <label for="0">1st Point</label>
+            <fieldset name="0">
+                <label for="x">X</label>
+                <input type="number" name="x" min="0" step="1" value="0"/><br/><br/>
+                <label for="x">Y</label>
+                <input type="number" name="y" min="0" step="1" value="0"/>
+            </fieldset>
+            <label for="1">2nd Point</label>
+            <fieldset name="1">
+                <label for="x">X</label>
+                <input type="number" name="x" min="0" step="1" value="0"/><br/><br/>
+                <label for="x">Y</label>
+                <input type="number" name="y" min="0" step="1" value="0"/>
+            </fieldset>
+        </fieldset>
+        <br/>
+        <label for="weights">Weights</label>
+        <fieldset name="weights">
+            <label for="units-per-pixel">Units Per Pixel</label>
+            <input type="number" name="units-per-pixel" min="0" value="1"/><br/><br/>
+            <label for="grade-distance">Distance to Measure Grade</label>
+            <input type="number" name="grade-distance" min="0" value="5"><br/><br/>
+            <label for="grade-weight">Weight of Grade</label>
+            <input type="number" name="grade-weight" min="0" value="1000"><br/><br/>
+            <label for="movement-weight-horizontal">Weight of Moving Horizontally</label>
+            <input type="number" name="movement-weight-horizontal" min="0" value="1"/><br/><br/>
+            <label for="movement-weight-vertical">Weight of Moving Vertically</label>
+            <input type="number" name="movement-weight-vertical" min="0" value="1"/><br/><br/>
+            <label for="heuristic-horizontal">Weight of Horizontal Distance From Goal</label>
+            <input type="number" name="heuristic-vertical" min="0" value="1"/><br/><br/>
+            <label for="heuristic-vertical">Weight of Vertical Distance From Goal</label>
+            <input type="number" name="heuristic-vertical" min="0" value="1"/><br/><br/>
+        </fieldset>
+        <br/>
+        <input type="submit">
+    </form>
+  </body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "breadcrumbs",
+  "version": "1.0.0",
+  "description": "A weighted shortest path trail layout generator",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RobinTheSprite/breadcrumbs.git"
+  },
+  "keywords": [
+    "a-star",
+    "gis",
+    "trails"
+  ],
+  "author": "Mark Underwood",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RobinTheSprite/breadcrumbs/issues"
+  },
+  "homepage": "https://github.com/RobinTheSprite/breadcrumbs#readme",
+  "devDependencies": {
+    "electron": "^17.1.2"
+  }
+}
